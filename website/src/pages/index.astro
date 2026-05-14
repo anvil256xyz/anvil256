@@ -1,0 +1,953 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import Navbar from "../components/Navbar.astro";
+
+/* ─── Math glyph layer (decorative background for the hero) ───
+   Light, pseudo-random scatter of symbols, hand-tuned positions
+   so they don't collide with the title text. */
+const heroGlyphs: Array<{ s: string; top: string; left: string; size: string; rot: string; weight: number }> = [
+  { s: "∑",          top: "8%",  left: "6%",  size: "5.4rem",  rot: "-8deg",  weight: 0.10 },
+  { s: "∫",          top: "14%", left: "92%", size: "5.8rem",  rot: "10deg",  weight: 0.09 },
+  { s: "∏",          top: "62%", left: "4%",  size: "4.6rem",  rot: "6deg",   weight: 0.08 },
+  { s: "∂",          top: "72%", left: "94%", size: "4.4rem",  rot: "-12deg", weight: 0.09 },
+  { s: "∇",          top: "34%", left: "2%",  size: "3.8rem",  rot: "14deg",  weight: 0.07 },
+  { s: "⨁",          top: "20%", left: "78%", size: "3.4rem",  rot: "-4deg",  weight: 0.08 },
+  { s: "≤",          top: "50%", left: "8%",  size: "3.0rem",  rot: "8deg",   weight: 0.07 },
+  { s: "≫",          top: "80%", left: "70%", size: "3.2rem",  rot: "-6deg",  weight: 0.07 },
+  { s: "π",          top: "26%", left: "88%", size: "3.0rem",  rot: "12deg",  weight: 0.10 },
+  { s: "λ",          top: "44%", left: "84%", size: "3.0rem",  rot: "-10deg", weight: 0.08 },
+  { s: "ε",          top: "55%", left: "16%", size: "2.6rem",  rot: "4deg",   weight: 0.08 },
+  { s: "κ",          top: "30%", left: "20%", size: "2.8rem",  rot: "-6deg",  weight: 0.08 },
+  { s: "σ",          top: "78%", left: "20%", size: "2.6rem",  rot: "8deg",   weight: 0.08 },
+  { s: "Ω",          top: "12%", left: "44%", size: "2.6rem",  rot: "0deg",   weight: 0.07 },
+  { s: "∞",          top: "70%", left: "50%", size: "3.4rem",  rot: "0deg",   weight: 0.08 },
+  { s: "φ",          top: "22%", left: "30%", size: "2.4rem",  rot: "-8deg",  weight: 0.07 },
+  { s: "θ",          top: "86%", left: "40%", size: "2.4rem",  rot: "6deg",   weight: 0.07 },
+  { s: "ℕ",          top: "40%", left: "70%", size: "2.8rem",  rot: "-4deg",  weight: 0.07 },
+  { s: "⌊x⌋",        top: "65%", left: "30%", size: "2.0rem",  rot: "0deg",   weight: 0.08 },
+  { s: "x ↦ H(x)",   top: "16%", left: "60%", size: "1.4rem",  rot: "-3deg",  weight: 0.09 },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "",
+    description: "Cascade Keccak-256 PoW · PI+NCT difficulty · Epoch-native halving · Base L2.",
+    template: "splash",
+    hero: { tagline: "", actions: [] },
+  }}
+>
+
+<!-- Ambient glow + math glyph backdrop -->
+<div class="anvil-ambient" aria-hidden="true"></div>
+
+<!-- ── NAVBAR ──────────────────────────────────────────────────── -->
+<Navbar activePage="home" />
+
+<!-- ── HERO ────────────────────────────────────────────────────── -->
+<section class="anvil-hero">
+
+  <!-- Decorative math glyph layer -->
+  <div class="anvil-math-band" aria-hidden="true">
+    {heroGlyphs.map(g => (
+      <span style={`top:${g.top};left:${g.left};font-size:${g.size};transform:translate(-50%,-50%) rotate(${g.rot});opacity:${g.weight}`}>{g.s}</span>
+    ))}
+  </div>
+
+  <div class="anvil-hero-eyebrow">
+    <span class="anvil-eyebrow-dot"></span>
+    Base L2 · Cascade Keccak-256 PoW · Ethereum-Secured
+  </div>
+
+  <h1 class="anvil-hero-title">
+    Proof-of-Work,<br/>
+    <span class="anvil-hero-accent">Work is verified. Trust is not required.</span>
+  </h1>
+
+  <p class="anvil-hero-sub">
+    <span class="anvil-eq">21M cap</span> ·
+    <span class="anvil-eq">R₀ = 50 ANVL</span> ·
+    <span class="anvil-eq">H = 210,000</span> ·
+    <span class="anvil-eq">fee = $0.10</span> ·
+    <span class="anvil-eq">PI + NCT</span> ·
+    <span class="anvil-eq">dev premine = ∅</span>
+  </p>
+
+  <!-- Featured "marquee" equation card — the protocol's defining identity -->
+  <div class="anvil-hero-eq-card">
+    <div class="anvil-hero-eq-label">
+      <span class="anvil-title-accent">◆</span> Cascade challenge function
+    </div>
+    <div class="anvil-hero-eq-body">
+      κ(m, ν, n) = H<span class="anvil-eq-paren">(</span>H<span class="anvil-eq-paren">(</span>H(m ∥ γ(m) ∥ g) ∥ n ∥ ν<span class="anvil-eq-paren">)</span> ∥ H(b<sub>n−1</sub> ∥ D[n])<span class="anvil-eq-paren">)</span>
+    </div>
+    <div class="anvil-hero-eq-foot">
+      valid ⟺ <span class="anvil-eq-strong">κ &lt; D[n]</span> ·
+      <code>scripts/check-supply-math.py</code> verifies the supply identity.
+    </div>
+  </div>
+
+  <div class="anvil-hero-actions">
+    <a href="/whitepaper" class="anvil-btn anvil-btn--primary">
+      Read the Whitepaper
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+    </a>
+    <a href="/mining-guide" class="anvil-btn anvil-btn--secondary">Mining Guide</a>
+    <a href="https://github.com/anvil256xyz/anvil256" class="anvil-btn anvil-btn--ghost" target="_blank" rel="noopener noreferrer">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+
+  <!-- Badge strip -->
+  <div class="anvil-badges">
+    {["Cascade Keccak-256","Base L2","ERC-20","Immutable","No Dev Premine","Protocol-Owned LP","PI+NCT Difficulty"].map(b => (
+      <span class="anvil-badge">{b}</span>
+    ))}
+  </div>
+</section>
+
+<!-- ── FEATURE CARDS ────────────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Core Properties
+    </span>
+    <span class="anvil-section-note">6 invariants · all on-chain</span>
+  </div>
+
+  <div class="anvil-features">
+
+    <div class="anvil-feature anvil-feature--accent">
+      <div class="anvil-feature-top">
+        <span class="anvil-feature-icon">⚒</span>
+        <span class="anvil-feature-tag">Supply</span>
+      </div>
+      <h3 class="anvil-feature-title">Mining + Protocol LP</h3>
+      <p class="anvil-feature-body">
+        Miner rewards are emitted by on-chain PoW, while <strong>10%</strong> of each
+        miner reward is minted to protocol-owned liquidity inside the same
+        <strong>21,000,000 ANVL</strong> cap. No dev premine, no VC tranche.
+      </p>
+      <div class="anvil-feature-eq">M(n)=R(n)+0.1R(n), capped by S<sub>max</sub></div>
+    </div>
+
+    <div class="anvil-feature">
+      <div class="anvil-feature-top">
+        <span class="anvil-feature-icon">⛓</span>
+        <span class="anvil-feature-tag">Architecture</span>
+      </div>
+      <h3 class="anvil-feature-title">Zero Backend</h3>
+      <p class="anvil-feature-body">
+        This site is static. The CLI talks directly to your chosen RPC.
+        Nothing else is operated — because there is nothing else.
+      </p>
+      <div class="anvil-feature-eq">deps = {`{`} bytecode, RPC {`}`}</div>
+    </div>
+
+    <div class="anvil-feature">
+      <div class="anvil-feature-top">
+        <span class="anvil-feature-icon">◈</span>
+        <span class="anvil-feature-tag">Economics</span>
+      </div>
+      <h3 class="anvil-feature-title">$0.10 Native Fee</h3>
+      <p class="anvil-feature-body">
+        Every <code>mine()</code> attaches a $0.10 fee as <code>msg.value</code>.
+        Half goes to the immutable dev recipient; half accumulates for
+        protocol-owned ANVL/WETH liquidity.
+      </p>
+      <div class="anvil-feature-eq">fee = $0.05<sub>dev</sub> + $0.05<sub>LP</sub></div>
+    </div>
+
+    <div class="anvil-feature">
+      <div class="anvil-feature-top">
+        <span class="anvil-feature-icon">∿</span>
+        <span class="anvil-feature-tag">Difficulty</span>
+      </div>
+      <h3 class="anvil-feature-title">PI + NCT Controller</h3>
+      <p class="anvil-feature-body">
+        Proportional-Integral timing control combined with the Nakamoto
+        Coefficient Throttle — difficulty tightens when mining centralises.
+        Decentralisation is a built-in equilibrium, not a social norm.
+      </p>
+      <div class="anvil-feature-eq">u[n] = sat(u<sub>pi</sub> + u<sub>nct</sub>, ±0.5)</div>
+    </div>
+
+    <div class="anvil-feature">
+      <div class="anvil-feature-top">
+        <span class="anvil-feature-icon">◐</span>
+        <span class="anvil-feature-tag">PoW</span>
+      </div>
+      <h3 class="anvil-feature-title">Cascade Keccak-256</h3>
+      <p class="anvil-feature-body">
+        Two-pass hash binds each puzzle to live on-chain epoch entropy.
+        Precomputing nonces for a future epoch is structurally impossible —
+        the required value doesn't exist until the previous epoch closes.
+      </p>
+      <div class="anvil-feature-eq">κ = H( H(inner ∥ ν) ∥ ε[n] )</div>
+    </div>
+
+    <div class="anvil-feature">
+      <div class="anvil-feature-top">
+        <span class="anvil-feature-icon">✦</span>
+        <span class="anvil-feature-tag">Sovereignty</span>
+      </div>
+      <h3 class="anvil-feature-title">Self-Sovereign</h3>
+      <p class="anvil-feature-body">
+        No pool, no registry, no telemetry. One wallet, one GPU, your RPC.
+        Each challenge is unique per miner — reordering txs earns attackers nothing.
+      </p>
+      <div class="anvil-feature-eq">advantage(reorder) = 0</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── PROTOCOL PARAMETERS ──────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Protocol Parameters
+    </span>
+    <span class="anvil-section-note">on-chain constants · immutable</span>
+  </div>
+
+  <div class="anvil-params">
+    {[
+      { label: "Max Supply",         value: "21,000,000 ANVL",      sym: "∑" },
+      { label: "Initial Reward",     value: "50 ANVL / epoch",      sym: "R₀" },
+      { label: "Halving Interval",   value: "210,000 epochs",       sym: "H" },
+      { label: "Miner Schedule Terminus", value: "epoch 13,440,000", sym: "Ω" },
+      { label: "Hash Function",      value: "Cascade Keccak-256",   sym: "κ" },
+      { label: "Epoch Target",       value: "120 s (setpoint)",     sym: "τ*" },
+      { label: "Difficulty Rule",    value: "PI + NCT controller",  sym: "u[n]" },
+      { label: "Adjust Cadence",     value: "2,016 epochs",         sym: "P" },
+      { label: "NCT Window",         value: "256 epochs",           sym: "W" },
+      { label: "Protocol Fee",       value: "$0.10 native ETH",     sym: "φ" },
+      { label: "Fee Split",          value: "$0.05 dev / $0.05 LP", sym: "φ/2" },
+      { label: "LP Token Reserve",   value: "10% of miner reward",  sym: "λ" },
+      { label: "Genesis LP Seed",    value: "1 ANVL + 0.001 ETH",   sym: "s₀" },
+      { label: "Main LP Trigger",    value: "50% totalSupply",      sym: "B" },
+      { label: "Fee Oracle",         value: "Chainlink ETH/USD",    sym: "ρ" },
+      { label: "Network",            value: "Base L2",              sym: "L" },
+      { label: "Distribution",       value: "miners + POL reserve", sym: "ω" },
+      { label: "Fee Recipient",      value: "Immutable ≠ deployer", sym: "η" },
+      { label: "Dev Premine",        value: "None",                 sym: "∅", none: true },
+      { label: "Admin Functions",    value: "None",                 sym: "∅", none: true },
+    ].map(p => (
+      <div class="anvil-param">
+        <span class="anvil-param-sym" data-len={p.sym.length} aria-hidden="true">{p.sym}</span>
+        <span class="anvil-param-label">{p.label}</span>
+        <span class={`anvil-param-value${p.none ? " anvil-param-value--none" : ""}`}>
+          {p.value}
+        </span>
+      </div>
+    ))}
+  </div>
+</section>
+
+<!-- ── WHAT'S NEW ────────────────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Novel Mechanisms
+    </span>
+    <span class="anvil-section-note">3 results · all formally proven</span>
+  </div>
+
+  <div class="anvil-novel-grid">
+
+    <div class="anvil-novel-card">
+      <div class="anvil-novel-num">01</div>
+      <h3 class="anvil-novel-title">Keccak-Cascade PoW</h3>
+      <p class="anvil-novel-body">
+        The puzzle for epoch <em>n</em> incorporates <code>epoch_entropy</code> —
+        derived from the block hash of epoch <em>n−1</em>'s confirmed transaction.
+        Since this value is unknowable until <em>n−1</em> closes on-chain, nonce
+        precomputation and rainbow tables are structurally impossible,
+        not just computationally expensive.
+      </p>
+      <div class="anvil-novel-formula">
+        <code>κ = keccak256( keccak256(inner ∥ ν) ∥ ε[n] )</code>
+        <small>ε[n] = H( b<sub>n−1</sub> ∥ D[n] )</small>
+      </div>
+    </div>
+
+    <div class="anvil-novel-card">
+      <div class="anvil-novel-num">02</div>
+      <h3 class="anvil-novel-title">Nakamoto Coefficient Throttle</h3>
+      <p class="anvil-novel-body">
+        A <strong>256-epoch</strong> rolling window tracks distinct active miners. When
+        mining centralises — fewer unique addresses producing the same
+        share of work — difficulty tightens automatically. Decentralisation
+        is not enforced by social consensus; it is the Nash equilibrium.
+      </p>
+      <div class="anvil-novel-formula">
+        <code>u<sub>nct</sub> = min( 0.1·(256/C<sub>u</sub> − 1), 0.3 ) ≥ 0</code>
+        <small>minimised (= 0) when C<sub>u</sub> = 256 (full distribution)</small>
+      </div>
+    </div>
+
+    <div class="anvil-novel-card">
+      <div class="anvil-novel-num">03</div>
+      <h3 class="anvil-novel-title">Epoch-Native Schedule</h3>
+      <p class="anvil-novel-body">
+        All emission and halving parameters are expressed in confirmed
+        <code>mine()</code> calls — epochs. There are no calendar dates,
+        block time assumptions, or month projections anywhere in the
+        protocol. The next halving is "at epoch 210,000", full stop.
+      </p>
+      <div class="anvil-novel-formula">
+        <code>R(n) = R₀ · 2<sup>−⌊n/H⌋</sup></code>
+        <small>S<sub>seed</sub> + ∑(R + 0.1R) ≤ 21,000,000 ANVL</small>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── EMISSION SCHEDULE ────────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Emission Schedule
+    </span>
+    <span class="anvil-section-note">epoch-native · no calendar projections</span>
+  </div>
+
+  <div class="anvil-timeline-card">
+    {[
+      { label: "Epoch 0",         sub: "50 ANVL miner reward; +5 ANVL POL reserve per mine", pct: 50    },
+      { label: "Epoch 210,000",   sub: "25 ANVL miner reward; +2.5 ANVL POL reserve",       pct: 75    },
+      { label: "Epoch 420,000",   sub: "12.5 ANVL miner reward; +1.25 ANVL POL reserve",    pct: 87.5  },
+      { label: "Epoch 630,000",   sub: "6.25 ANVL miner reward; +0.625 ANVL POL reserve",   pct: 93.75 },
+      { label: "Epoch 1,470,000", sub: "0.390625 ANVL miner reward; +10% POL reserve",      pct: 99.6  },
+      { label: "Epoch 13,440,000",sub: "miner-only schedule terminus; cap may stop earlier", pct: 100   },
+    ].map(row => (
+      <div class="anvil-tl-row">
+        <div class="anvil-tl-meta">
+          <span class="anvil-tl-name">{row.label}</span>
+        </div>
+        <div class="anvil-tl-track">
+          <div class="anvil-tl-fill" style={`width:${row.pct * 0.92}%`}></div>
+        </div>
+        <span class="anvil-tl-sub">{row.sub}</span>
+      </div>
+    ))}
+  </div>
+
+  <p class="anvil-note">
+    <span class="math-bullet">∑</span>
+    Miner-only baseline: <code>H × R₀ × 2 ≈ 21,000,000 ANVL</code>.
+    Actual supply also includes <code>1 ANVL</code> seed LP and <code>0.1R(n)</code> POL reserve mints,
+    all capped by <code>MAX_SUPPLY</code>.
+  </p>
+</section>
+
+<!-- ── QUICK-START TERMINAL ─────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Start Mining
+    </span>
+    <a href="/mining-guide" class="anvil-section-link">Full guide →</a>
+  </div>
+
+  <div class="anvil-terminal">
+    <div class="anvil-terminal-bar">
+      <span class="anvil-dot anvil-dot--red"></span>
+      <span class="anvil-dot anvil-dot--yellow"></span>
+      <span class="anvil-dot anvil-dot--green"></span>
+      <span class="anvil-terminal-title">anvil256-cli</span>
+    </div>
+    <pre class="anvil-terminal-body"><code><span class="t-comment"># 1. Clone + build from source</span>
+git clone https://github.com/anvil256xyz/anvil256.git
+cd anvil256
+
+<span class="t-comment"># 2. Build kernel: default GPU, or CPU fallback</span>
+cd kernel
+make              <span class="t-comment"># NVIDIA CUDA default</span>
+<span class="t-comment"># make cpu        # CPU-only fallback</span>
+cd ../cli
+cargo build --release --locked
+
+<span class="t-comment"># 3. Configure</span>
+cp .env.example .env
+<span class="t-comment"># set BASE_RPC_URL, PRIVATE_KEY, ANVIL256_ADDRESS in .env</span>
+
+<span class="t-comment"># 4. Run</span>
+./target/release/anvil256-cli
+
+<span class="t-out">INFO  Anvil256 CLI ready signer=0x... chain=base epoch=0</span>
+<span class="t-out">INFO  epoch_entropy fetched entropy=0x00003f... epoch=0</span>
+<span class="t-out">INFO  GPU bound index=0 name=NVIDIA RTX 4060 Ti cascade=true</span>
+<span class="t-success">INFO  found nonce=0x... reward=50.0 ANVL fee=$0.10 tx=0xabc...</span></code></pre>
+  </div>
+</section>
+
+<style>
+  /* ── Local fallback vars (must match global.css) ─────────────── */
+  :root {
+    --anvil-amber:        #b5651d;
+    --anvil-amber-high:   #c97a1f;
+    --anvil-amber-mid:    #8c4d12;
+    --anvil-amber-deep:   #6d3a08;
+    --anvil-amber-low:    #f7e7c4;
+    --anvil-amber-pale:   #fcedcf;
+    --anvil-amber-glow:   rgba(181,101,29,0.12);
+    --anvil-border-amber: rgba(181,101,29,0.32);
+    --anvil-border-subtle:rgba(15,13,8,0.10);
+    --anvil-border-dim:   rgba(15,13,8,0.18);
+    --anvil-surface-0:    #fbf5e4;
+    --anvil-surface-1:    #f3ead2;
+    --anvil-surface-2:    #ece1bd;
+    --anvil-surface-3:    #e5d6a8;
+    --anvil-paper:        #fcf8ec;
+    --anvil-text:         #0f0d08;
+    --anvil-text-muted:   #574d3b;
+    --anvil-text-faint:   #8a7e64;
+    --anvil-ink:          #15110b;
+    --anvil-radius:       11px;
+    --anvil-radius-sm:    7px;
+    --anvil-radius-lg:    16px;
+    --anvil-font-display: 'Syne', system-ui, sans-serif;
+    --anvil-font-mono:    'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+    --anvil-font-math:    'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+  }
+
+  /* ── Ambient glow + math glyph layer ─────────────────────────── */
+  .anvil-ambient {
+    position: fixed; top: -30vh; left: 50%;
+    transform: translateX(-50%);
+    width: 80vw; height: 60vh;
+    background: radial-gradient(ellipse, rgba(181,101,29,0.10) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .anvil-math-band {
+    position: absolute; inset: 0;
+    overflow: hidden; pointer-events: none; z-index: 0;
+    -webkit-mask-image: radial-gradient(ellipse 95% 80% at 50% 50%, #000 30%, transparent 70%);
+            mask-image: radial-gradient(ellipse 95% 80% at 50% 50%, #000 30%, transparent 70%);
+  }
+  .anvil-math-band span {
+    position: absolute;
+    font-family: var(--anvil-font-math);
+    color: var(--anvil-amber-deep);
+    font-weight: 500;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  /* ── Hero ──────────────────────────────────────────────────── */
+  .anvil-hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 4.5rem 1rem 3rem;
+    gap: 1.15rem;
+    isolation: isolate;
+  }
+  .anvil-hero > :not(.anvil-math-band) { position: relative; z-index: 1; }
+
+  .anvil-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    padding: 0.32rem 0.85rem;
+    border: 1px solid var(--anvil-border-amber);
+    border-radius: 999px;
+    background: var(--anvil-amber-low);
+  }
+  .anvil-eyebrow-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--anvil-amber);
+    box-shadow: 0 0 8px rgba(181,101,29,0.55);
+    animation: anv-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes anv-pulse {
+    0%,100% { transform: scale(1); opacity: 0.55; }
+    50%     { transform: scale(1.7); opacity: 1.0; }
+  }
+
+  .anvil-hero-title {
+    font-size: clamp(2.4rem, 6.4vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--anvil-text);
+  }
+  .anvil-hero-accent {
+    color: var(--anvil-amber-deep);
+    font-style: italic;
+    font-family: var(--anvil-font-math);
+    font-weight: 600;
+  }
+
+  .anvil-hero-sub {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+    color: var(--anvil-text-muted);
+    line-height: 1.7;
+    max-width: 50rem;
+    margin: 0;
+  }
+  .anvil-eq {
+    font-family: var(--anvil-font-mono);
+    color: var(--anvil-amber-deep);
+    background: var(--anvil-amber-low);
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--anvil-border-amber);
+    border-radius: var(--anvil-radius-xs);
+    font-size: 0.78rem;
+    letter-spacing: 0;
+  }
+
+  /* ── Featured equation card ─────────────────────────────────── */
+  .anvil-hero-eq-card {
+    width: 100%;
+    max-width: 42rem;
+    background: var(--anvil-paper);
+    border: 1px solid var(--anvil-border-amber);
+    border-radius: var(--anvil-radius-lg);
+    box-shadow: 0 4px 18px rgba(80,55,15,0.10);
+    padding: 1.1rem 1.4rem;
+    text-align: left;
+    margin-top: 0.4rem;
+  }
+  .anvil-hero-eq-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    margin-bottom: 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .anvil-hero-eq-body {
+    font-family: var(--anvil-font-math);
+    font-size: 1.1rem;
+    line-height: 1.55;
+    color: var(--anvil-ink);
+    word-break: break-word;
+  }
+  .anvil-eq-paren { color: var(--anvil-amber); font-weight: 600; }
+  .anvil-eq-strong { color: var(--anvil-amber-deep); font-weight: 700; }
+  .anvil-hero-eq-foot {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    color: var(--anvil-text-muted);
+    line-height: 1.55;
+  }
+  .anvil-hero-eq-foot code {
+    font-size: 0.72rem;
+  }
+
+  /* ── Buttons ───────────────────────────────────────────────── */
+  .anvil-hero-actions {
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+  }
+  .anvil-btn {
+    display: inline-flex; align-items: center;
+    gap: 0.45rem;
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.55rem 1.2rem;
+    border-radius: var(--anvil-radius-sm);
+    transition: filter 0.2s, transform 0.18s, box-shadow 0.2s, background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .anvil-btn--primary {
+    background: linear-gradient(135deg, var(--anvil-amber-high), var(--anvil-amber-mid));
+    color: #fff8e7 !important;
+    border: 1px solid var(--anvil-amber-deep);
+  }
+  .anvil-btn--primary:hover {
+    color: #fff8e7 !important;
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(181,101,29,0.32);
+  }
+  .anvil-btn--secondary {
+    background: var(--anvil-paper);
+    border: 1px solid var(--anvil-border-dim);
+    color: var(--anvil-text);
+  }
+  .anvil-btn--secondary:hover {
+    border-color: var(--anvil-amber);
+    color: var(--anvil-amber-deep);
+    background: var(--anvil-amber-low);
+  }
+  .anvil-btn--ghost {
+    background: transparent;
+    border: 1px solid var(--anvil-border-subtle);
+    color: var(--anvil-text-muted);
+  }
+  .anvil-btn--ghost:hover {
+    border-color: var(--anvil-amber);
+    color: var(--anvil-amber-deep);
+  }
+
+  /* Badges */
+  .anvil-badges {
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .anvil-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.6rem;
+    border: 1px solid var(--anvil-border-amber);
+    border-radius: 999px;
+    background: var(--anvil-amber-low);
+    color: var(--anvil-amber-deep);
+  }
+
+  /* ── Section helpers ───────────────────────────────────────── */
+  .anvil-section { margin-top: 3.5rem; }
+  .anvil-section-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap; gap: 0.5rem;
+  }
+  .anvil-section-label {
+    font-size: 0.67rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    display: flex; align-items: center; gap: 0.45rem;
+  }
+  .anvil-title-accent { color: var(--anvil-amber); font-size: 0.58rem; }
+  .anvil-section-link {
+    font-size: 0.7rem; font-weight: 600;
+    color: var(--anvil-amber-mid); text-decoration: none;
+    letter-spacing: 0.04em; transition: color 0.15s;
+  }
+  .anvil-section-link:hover { color: var(--anvil-amber-deep); }
+  .anvil-section-note {
+    font-size: 0.63rem; color: var(--anvil-text-faint);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Feature grid ──────────────────────────────────────────── */
+  .anvil-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 1px;
+    background: var(--anvil-border-subtle);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-feature {
+    background: var(--anvil-surface-0);
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: background 0.15s;
+  }
+  .anvil-feature:hover { background: var(--anvil-surface-1); }
+  .anvil-feature--accent { background: var(--anvil-amber-pale); }
+  .anvil-feature--accent:hover { background: var(--anvil-amber-low); }
+  .anvil-feature-top {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.9rem;
+  }
+  .anvil-feature-icon {
+    font-size: 1.5rem;
+    color: var(--anvil-amber-deep);
+    opacity: 0.85;
+    line-height: 1;
+  }
+  .anvil-feature-tag {
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--anvil-text-faint);
+  }
+  .anvil-feature-title {
+    font-size: 0.98rem; font-weight: 700;
+    margin: 0 0 0.5rem; letter-spacing: -0.01em;
+    color: var(--anvil-text);
+  }
+  .anvil-feature-body {
+    font-size: 0.81rem; line-height: 1.68;
+    color: var(--anvil-text-muted); margin: 0;
+  }
+  .anvil-feature-eq {
+    margin-top: 0.85rem;
+    font-family: var(--anvil-font-math);
+    font-size: 0.78rem;
+    color: var(--anvil-amber-deep);
+    border-top: 1px dashed var(--anvil-border-amber);
+    padding-top: 0.7rem;
+    line-height: 1.5;
+  }
+  /* Force cream inline-code regardless of Starlight / expressive-code defaults. */
+  .anvil-feature-eq code,
+  .anvil-feature-body code,
+  .anvil-novel-body code,
+  .anvil-hero-eq-foot code,
+  .anvil-note code {
+    font-family: var(--anvil-font-mono) !important;
+    font-size: 0.78em !important;
+    background: var(--anvil-amber-low) !important;
+    color: var(--anvil-amber-deep) !important;
+    border: 1px solid var(--anvil-border-amber) !important;
+    border-radius: 4px !important;
+    padding: 0.08em 0.4em !important;
+  }
+
+  /* ── Protocol params ───────────────────────────────────────── */
+  .anvil-params {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+    gap: 1px;
+    background: var(--anvil-border-subtle);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-param {
+    background: var(--anvil-surface-0);
+    padding: 1rem 1.2rem;
+    display: grid;
+    grid-template-columns: minmax(2.6rem, max-content) 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 0.85rem;
+    row-gap: 0.15rem;
+    align-items: center;
+    transition: background 0.12s;
+    min-width: 0;
+  }
+  .anvil-param:hover { background: var(--anvil-surface-1); }
+  .anvil-param-sym {
+    grid-row: 1 / span 2;
+    font-family: var(--anvil-font-math);
+    font-size: 1.45rem;
+    color: var(--anvil-amber);
+    line-height: 1;
+    text-align: left;
+    font-weight: 600;
+    font-style: italic;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  /* Shrink multi-char symbols so they don't collide with the label. */
+  .anvil-param-sym[data-len="2"] { font-size: 1.15rem; }
+  .anvil-param-sym[data-len="3"] { font-size: 1.0rem; letter-spacing: -0.02em; }
+  .anvil-param-sym[data-len="4"] { font-size: 0.9rem; letter-spacing: -0.02em; }
+  .anvil-param-label {
+    font-size: 0.63rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--anvil-text-faint);
+  }
+  .anvil-param-value {
+    font-size: 0.86rem; font-weight: 600;
+    color: var(--anvil-text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+  }
+  .anvil-param-value--none {
+    color: var(--anvil-amber-deep);
+    font-style: italic;
+  }
+
+  /* ── Novel mechanism cards ─────────────────────────────────── */
+  .anvil-novel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: 1px;
+    background: var(--anvil-border-subtle);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-novel-card {
+    background: var(--anvil-surface-0);
+    padding: 1.75rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: background 0.15s;
+  }
+  .anvil-novel-card:hover { background: var(--anvil-surface-1); }
+  .anvil-novel-num {
+    font-family: var(--anvil-font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--anvil-amber-deep);
+    letter-spacing: 0.08em;
+  }
+  .anvil-novel-title {
+    font-size: 1rem; font-weight: 700;
+    margin: 0; color: var(--anvil-text);
+    letter-spacing: -0.01em;
+  }
+  .anvil-novel-body {
+    font-size: 0.81rem; line-height: 1.7;
+    color: var(--anvil-text-muted); margin: 0;
+  }
+  .anvil-novel-body code {
+    font-size: 0.72rem;
+  }
+  .anvil-novel-formula {
+    margin-top: 0.4rem;
+    background: var(--anvil-paper);
+    border: 1px solid var(--anvil-border-amber);
+    border-left: 3px solid var(--anvil-amber);
+    border-radius: var(--anvil-radius-sm);
+    padding: 0.65rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .anvil-novel-formula code {
+    font-family: var(--anvil-font-mono) !important;
+    font-size: 0.78rem !important;
+    color: var(--anvil-amber-deep) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+  .anvil-novel-formula small {
+    font-size: 0.68rem;
+    color: var(--anvil-text-muted);
+    font-family: var(--anvil-font-math);
+  }
+
+  /* ── Emission timeline ─────────────────────────────────────── */
+  .anvil-timeline-card {
+    background: var(--anvil-surface-0);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg);
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-tl-row {
+    display: grid;
+    grid-template-columns: 10rem 1fr auto;
+    align-items: center;
+    gap: 1rem;
+  }
+  .anvil-tl-meta { display: flex; flex-direction: column; gap: 0.1rem; }
+  .anvil-tl-name {
+    font-family: var(--anvil-font-mono);
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--anvil-amber-deep); white-space: nowrap;
+  }
+  .anvil-tl-track {
+    flex: 1; height: 6px;
+    background: var(--anvil-surface-2);
+    border-radius: 999px; overflow: hidden;
+  }
+  .anvil-tl-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--anvil-amber), var(--anvil-amber-deep));
+    border-radius: 999px; opacity: 0.95;
+  }
+  .anvil-tl-sub {
+    font-size: 0.7rem; color: var(--anvil-text-muted);
+    white-space: nowrap; text-align: right;
+    min-width: 12rem;
+  }
+  .anvil-note {
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--anvil-text-muted);
+    line-height: 1.65;
+  }
+  .math-bullet {
+    color: var(--anvil-amber-deep);
+    font-family: var(--anvil-font-math);
+    font-weight: 700;
+    margin-right: 0.25rem;
+  }
+
+  /* ── Terminal ──────────────────────────────────────────────── */
+  .anvil-terminal {
+    background: #1a1410;
+    border: 1px solid rgba(181,101,29,0.40);
+    border-radius: var(--anvil-radius-lg);
+    overflow: hidden;
+    font-family: var(--anvil-font-mono);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.32);
+  }
+  .anvil-terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(181,101,29,0.20);
+    background: #120f0b;
+  }
+  .anvil-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .anvil-dot--red    { background: #d44535; }
+  .anvil-dot--yellow { background: #c79320; }
+  .anvil-dot--green  { background: #2f8f3f; }
+  .anvil-terminal-title {
+    font-size: 0.65rem; font-weight: 600;
+    color: #c97a1f;
+    letter-spacing: 0.06em;
+    margin-left: auto;
+  }
+  .anvil-terminal-body {
+    padding: 1.2rem 1.4rem;
+    font-size: 0.74rem;
+    line-height: 1.85;
+    margin: 0;
+    overflow-x: auto;
+    background: #1a1410;
+  }
+  /* ── Override Starlight/expressive-code resets — dark terminal ── */
+  .anvil-terminal-body,
+  .anvil-terminal-body code,
+  .anvil-terminal-body * {
+    color: #e8d8b8 !important;
+    background: transparent !important;
+    font-family: var(--anvil-font-mono) !important;
+    font-size: 0.74rem !important;
+  }
+  .anvil-terminal-body .t-comment,
+  .anvil-terminal-body code .t-comment { color: #7a6a50 !important; }
+  .anvil-terminal-body .t-out,
+  .anvil-terminal-body code .t-out     { color: #c49a3a !important; display: block; }
+  .anvil-terminal-body .t-success,
+  .anvil-terminal-body code .t-success { color: #e8a030 !important; display: block; font-weight: 700; }
+
+  @media (max-width: 640px) {
+    .anvil-tl-row { grid-template-columns: 8rem 1fr; }
+    .anvil-tl-sub { display: none; }
+    .anvil-hero-title { font-size: clamp(1.9rem, 8vw, 2.8rem); }
+    .anvil-novel-grid { grid-template-columns: 1fr; }
+    .anvil-hero-eq-body { font-size: 0.95rem; }
+  }
+</style>
+
+</StarlightPage>

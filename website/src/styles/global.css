@@ -1,0 +1,751 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────
+   ANVIL256 · Design System v3 — "Paper Forge"
+   Theme:  Cream parchment surfaces · ink-black typography ·
+           ember-amber accents · prominent mathematical glyphs.
+   Fonts:  Syne (display) · IBM Plex Mono (mono)
+           Crimson Pro (serif math captions, optional)
+───────────────────────────────────────────────────────────── */
+
+:root {
+  /* ──────────────────────────────────────────────────────────────
+     Starlight overrides — Light theme.
+     Starlight is dark-first: --sl-color-white = primary text colour,
+     --sl-color-black = page background, and the gray scale runs
+     from "near-white" (gray-1) down to "near-black" (gray-7).
+     For our cream theme we INVERT this so any built-in Starlight
+     rule that says `color: var(--sl-color-white)` paints ink, not
+     literal white (which was invisible on cream).
+  ────────────────────────────────────────────────────────────── */
+  --sl-color-white:        #15110b;
+  --sl-color-gray-1:       #15110b;
+  --sl-color-gray-2:       #2a2620;
+  --sl-color-gray-3:       #574d3b;
+  --sl-color-gray-4:       #8a7e64;
+  --sl-color-gray-5:       #c9bea3;
+  --sl-color-gray-6:       #ece1bd;
+  --sl-color-gray-7:       #f3ead2;
+  --sl-color-black:        #fcf8ec;
+
+  --sl-color-accent-low:   #f7e7c4;
+  --sl-color-accent:       #b5651d;
+  --sl-color-accent-high:  #8c4d12;
+
+  --sl-color-text:         #15110b;
+  --sl-color-text-accent:  #8c4d12;
+  --sl-color-text-invert:  #fcf8ec;
+
+  --sl-color-bg:           #f7f1e0;
+  --sl-color-bg-nav:       #fbf5e4;
+  --sl-color-bg-sidebar:   #fbf5e4;
+  --sl-color-bg-inline-code: #fcedcf;
+
+  --sl-color-hairline:        rgba(15,13,8,0.10);
+  --sl-color-hairline-light:  rgba(15,13,8,0.06);
+  --sl-color-hairline-shade:  rgba(15,13,8,0.20);
+
+  --sl-nav-height:        0px !important;
+
+  /* ── Amber palette (forge / ember) ── */
+  --anvil-amber:         #b5651d;
+  --anvil-amber-mid:     #8c4d12;
+  --anvil-amber-low:     #f7e7c4;
+  --anvil-amber-high:    #c97a1f;
+  --anvil-amber-deep:    #6d3a08;
+  --anvil-amber-pale:    #fcedcf;
+  --anvil-amber-glow:    rgba(181,101,29,0.12);
+  --anvil-amber-glow-md: rgba(181,101,29,0.22);
+
+  /* ── Cream / parchment surfaces ── */
+  --anvil-bg:         #f7f1e0;   /* main page */
+  --anvil-surface-0:  #fbf5e4;   /* card surface */
+  --anvil-surface-1:  #f3ead2;   /* card hover */
+  --anvil-surface-2:  #ece1bd;   /* deeper accent */
+  --anvil-surface-3:  #e5d6a8;   /* deepest accent */
+  --anvil-paper:      #fcf8ec;   /* nearly-white parchment */
+
+  /* ── Ink / text (the user asked for black text) ── */
+  --anvil-text:        #0f0d08;
+  --anvil-text-strong: #000000;
+  --anvil-text-muted:  #574d3b;
+  --anvil-text-faint:  #8a7e64;
+  --anvil-ink:         #15110b;   /* used for math expressions */
+
+  /* ── Borders ── */
+  --anvil-border-faint:        rgba(15,13,8,0.06);
+  --anvil-border-subtle:       rgba(15,13,8,0.10);
+  --anvil-border-dim:          rgba(15,13,8,0.18);
+  --anvil-border-amber:        rgba(181,101,29,0.32);
+  --anvil-border-amber-strong: rgba(181,101,29,0.55);
+
+  /* ── Radii ── */
+  --anvil-radius-xs: 4px;
+  --anvil-radius-sm: 7px;
+  --anvil-radius:    11px;
+  --anvil-radius-lg: 16px;
+  --anvil-radius-xl: 22px;
+
+  /* ── Typography ── */
+  --anvil-font-display: 'Syne', system-ui, sans-serif;
+  --anvil-font-mono:    'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --anvil-font-math:    'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+
+  /* ── Shadows (soft on cream — short reach, warm tint) ── */
+  --anvil-shadow-sm:    0 1px 2px rgba(80,55,15,0.10);
+  --anvil-shadow:       0 4px 14px rgba(80,55,15,0.10);
+  --anvil-shadow-lg:    0 10px 28px rgba(80,55,15,0.14);
+  --anvil-shadow-amber: 0 0 24px rgba(181,101,29,0.18);
+}
+
+/* ─── Reset ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+/* Math-symbol watermark baked into the page background so it can
+   never be covered by any other CSS reset. The tile is a
+   ~640×640 SVG of italic math glyphs in amber-deep at low alpha. */
+body {
+  background-color: var(--anvil-bg);
+  background-image:
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cstyle%3Etext%7Bfont-family:'Cambria Math','Latin Modern Math',serif;font-style:italic;fill:%236d3a08;opacity:0.16;%7D%3C/style%3E%3Ctext x='40'  y='80'  font-size='46'%3E%E2%88%91%3C/text%3E%3Ctext x='280' y='60'  font-size='40'%3E%E2%88%AB%3C/text%3E%3Ctext x='500' y='90'  font-size='44'%3E%E2%88%8F%3C/text%3E%3Ctext x='110' y='180' font-size='38'%3E%CE%BA%3C/text%3E%3Ctext x='330' y='160' font-size='34'%3Ex%E2%86%A6H%28x%29%3C/text%3E%3Ctext x='520' y='200' font-size='42'%3E%E2%88%82%3C/text%3E%3Ctext x='60'  y='260' font-size='34'%3E%E2%9F%A8m%2C%CE%BD%2Cn%E2%9F%A9%3C/text%3E%3Ctext x='400' y='290' font-size='44'%3E%E2%88%87%3C/text%3E%3Ctext x='30'  y='360' font-size='32'%3E%CF%84%2A%3D120s%3C/text%3E%3Ctext x='240' y='370' font-size='40'%3E%CF%86%3C/text%3E%3Ctext x='360' y='370' font-size='36'%3E%E2%84%95%3C/text%3E%3Ctext x='470' y='370' font-size='38'%3E%E2%88%9E%3C/text%3E%3Ctext x='90'  y='460' font-size='34'%3ER%28n%29%3DR%E2%82%80%C2%B72%5E%E2%88%92%E2%8C%8An%2FH%E2%8C%8B%3C/text%3E%3Ctext x='430' y='460' font-size='38'%3E%CE%A9%3C/text%3E%3Ctext x='540' y='460' font-size='34'%3E%E2%88%85%3C/text%3E%3Ctext x='60'  y='560' font-size='36'%3E%E2%8A%95%3C/text%3E%3Ctext x='160' y='560' font-size='32'%3E%CE%B5%5Bn%5D%3D%E2%84%8B%28b%E2%82%99%E2%82%8B%E2%82%81%E2%88%A5D%5Bn%5D%29%3C/text%3E%3Ctext x='540' y='560' font-size='42'%3E%CF%80%3C/text%3E%3C/svg%3E");
+  background-size: 640px 640px;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  color: var(--anvil-text);
+  font-family: var(--anvil-font-display);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* ─── Starlight: hide built-in header ─────────────────────────
+   Starlight ≥0.30 renders its top bar as `<div class="header">`
+   inside `.page` / `.sl-flex`, not `<header class="header">`,
+   so the old `header.header` selector missed it and the default
+   SiteTitle leaked above our custom `<Navbar />` (`.anv-nav`).
+   We hide every variant Starlight has shipped, but only when
+   it is NOT our own nav class. */
+.page > header,
+.page > .header,
+.page-frame > header,
+.page-frame > .header,
+.sl-flex > header,
+.sl-flex > .header,
+header.header,
+div.header:not(.anv-nav) {
+  display: none !important;
+}
+
+/* ─── Typography ─────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6,
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3 {
+  font-family: var(--anvil-font-display);
+  color: var(--anvil-text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.sl-markdown-content {
+  color: var(--anvil-text);
+}
+
+.sl-markdown-content a {
+  color: var(--anvil-amber-mid);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.sl-markdown-content a:hover { color: var(--anvil-amber-deep); }
+
+.sl-markdown-content blockquote {
+  border-left: 3px solid var(--anvil-amber);
+  background: var(--anvil-amber-pale);
+  color: var(--anvil-text);
+  padding: 0.9rem 1.2rem;
+  margin: 1.2rem 0;
+  border-radius: 0 var(--anvil-radius) var(--anvil-radius) 0;
+}
+
+/* ─── Tables ─────────────────────────────────────────────────── */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+  background: var(--anvil-paper);
+}
+
+thead tr {
+  border-bottom: 1px solid var(--anvil-border-amber);
+  background: var(--anvil-amber-low);
+}
+
+thead th {
+  padding: 0.7rem 1.1rem;
+  text-align: left;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--anvil-amber-deep);
+  font-family: var(--anvil-font-display);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--anvil-border-faint);
+  transition: background 0.12s;
+}
+
+tbody tr:hover { background: rgba(181,101,29,0.05); }
+
+tbody td {
+  padding: 0.7rem 1.1rem;
+  color: var(--anvil-text);
+  vertical-align: middle;
+}
+
+/* ─── Code ───────────────────────────────────────────────────── */
+/* Bare selector first. The high-specificity block below beats Starlight
+   / expressive-code / Tailwind base which can re-apply a dark code style. */
+code {
+  font-family: var(--anvil-font-mono);
+  font-size: 0.83em;
+  background: var(--anvil-amber-pale);
+  border: 1px solid var(--anvil-border-amber);
+  border-radius: var(--anvil-radius-xs);
+  padding: 0.12em 0.45em;
+  color: var(--anvil-amber-deep);
+}
+
+/* Inline code anywhere on the site — force cream. */
+html body :not(pre) > code,
+html body .sl-markdown-content :not(pre) > code {
+  background: var(--anvil-amber-pale) !important;
+  border: 1px solid var(--anvil-border-amber) !important;
+  color: var(--anvil-amber-deep) !important;
+  border-radius: var(--anvil-radius-xs) !important;
+  padding: 0.12em 0.45em !important;
+}
+
+pre {
+  font-family: var(--anvil-font-mono);
+  border-radius: var(--anvil-radius);
+  padding: 1.2rem 1.4rem;
+  background: var(--anvil-paper);
+  border: 1px solid var(--anvil-border-subtle);
+  box-shadow: var(--anvil-shadow-sm);
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  scrollbar-width: thin;
+  scrollbar-color: var(--anvil-border-dim) transparent;
+}
+
+pre code {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  color: inherit !important;
+}
+
+/* ─── Expressive-Code (Starlight) ─ force light theme ────────────
+   Starlight ships expressive-code which by default applies a dark
+   Shiki theme. Many tokens (plain text, log lines, output) carry
+   inline `--0:#fff…` / near-white colours that disappear on our
+   cream paper. We:
+
+   1. Re-point every documented expressive-code CSS variable to a
+      cream-paper / amber-ink palette so the *frame*, *titlebar*,
+      *tab*, *gutter*, *line numbers* and *unstyled tokens* all
+      become readable.
+   2. Force the base text colour of `.ec-line` (the per-line span
+      wrapper) to ink/amber-deep, so any token that didn't pick up
+      a syntax colour falls back to readable colour instead of
+      white.
+   3. Re-tint the most common white-ish inline colours (`#fff`,
+      `#e6…`, `#d4…`, `#abb2bf`, `#c9d1d9`) to amber-deep with an
+      attribute-substring selector — covers GitHub-Dark, One-Dark
+      and Dracula default themes without needing to know which one
+      Starlight is currently using.
+
+   For a permanent / nicer-syntax solution, set a light theme in
+   `astro.config.mjs`:
+
+       starlight({
+         expressiveCode: {
+           themes: ['github-light'],
+           styleOverrides: {
+             frames: { frameBoxShadowCssValue: 'none' },
+           },
+         },
+       })
+   This block keeps the site readable even if that config is not
+   in place yet.
+────────────────────────────────────────────────────────────── */
+:root {
+  --ec-codeFg:                  var(--anvil-amber-deep);
+  --ec-codeBg:                  var(--anvil-paper);
+  --ec-brdCol:                  var(--anvil-border-amber);
+  --ec-brdRad:                  var(--anvil-radius-xs);
+
+  --ec-frm-frameBg:             var(--anvil-paper);
+  --ec-frm-edBg:                var(--anvil-paper);
+  --ec-frm-edTabBarBg:          var(--anvil-paper);
+  --ec-frm-edTabBarBrdBtmCol:   var(--anvil-border-amber);
+  --ec-frm-edActTabBg:          var(--anvil-amber-low);
+  --ec-frm-edActTabFg:          var(--anvil-amber-deep);
+  --ec-frm-edActTabBrdCol:      var(--anvil-amber);
+  --ec-frm-inlineBtnBg:         var(--anvil-amber-low);
+  --ec-frm-inlineBtnFg:         var(--anvil-amber-deep);
+  --ec-frm-trmTtbBg:            var(--anvil-amber-low);
+  --ec-frm-trmTtbFg:            var(--anvil-amber-deep);
+  --ec-frm-trmTtbBrdBtmCol:     var(--anvil-border-amber);
+
+  --ec-gtrBg:                   transparent;
+  --ec-gtrBrdCol:               var(--anvil-border-amber);
+  --ec-tm-insBg:                rgba(46,160,67,0.10);
+  --ec-tm-delBg:                rgba(207,77,77,0.10);
+}
+
+/* Base text colour fallback for any unstyled token. */
+.expressive-code,
+.expressive-code .frame,
+.expressive-code .frame pre,
+.expressive-code .frame pre code,
+.expressive-code pre,
+.expressive-code pre code,
+.expressive-code .ec-line {
+  color: var(--anvil-amber-deep) !important;
+}
+
+/* Tokens with near-white inline colours → amber-deep. Covers the
+   default dark themes (github-dark, one-dark-pro, dracula, etc.). */
+.expressive-code .ec-line span[style*="--0:#fff"],
+.expressive-code .ec-line span[style*="--0:#FFF"],
+.expressive-code .ec-line span[style*="--0:#e6e6e6"],
+.expressive-code .ec-line span[style*="--0:#e1e4e8"],
+.expressive-code .ec-line span[style*="--0:#d4d4d4"],
+.expressive-code .ec-line span[style*="--0:#cdd6f4"],
+.expressive-code .ec-line span[style*="--0:#c9d1d9"],
+.expressive-code .ec-line span[style*="--0:#abb2bf"],
+.expressive-code .ec-line span[style*="color:#fff"],
+.expressive-code .ec-line span[style*="color:#FFF"],
+.expressive-code .ec-line span[style*="color: #fff"],
+.expressive-code .ec-line span[style*="color: #FFF"],
+.expressive-code .ec-line span[style*="color:rgb(255"],
+.expressive-code .ec-line span[style*="color: rgb(255"] {
+  color: var(--anvil-amber-deep) !important;
+}
+
+/* ─── Expressive-Code: ALL code blocks → dark theme ─────────────
+   Covers both .frame.not-content (regular code blocks) and
+   .frame.is-terminal (terminal blocks). Placed after the cream
+   overrides above so cascade order ensures these win.
+────────────────────────────────────────────────────────────── */
+
+/* ── 1. Frame wrapper: dark background + amber border ── */
+.expressive-code .frame,
+.expressive-code .frame.not-content,
+.expressive-code .frame.is-terminal {
+  background: #1a1410 !important;
+  border-color: rgba(181,101,29,0.40) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.28) !important;
+  --ec-frm-frameBg:             #1a1410 !important;
+  --ec-frm-edBg:                #1a1410 !important;
+  --ec-frm-edTabBarBg:          #120f0b !important;
+  --ec-frm-edTabBarBrdBtmCol:   rgba(181,101,29,0.25) !important;
+  --ec-frm-edActTabBg:          #2a1f12 !important;
+  --ec-frm-edActTabFg:          #e8d8b8 !important;
+  --ec-frm-edActTabBrdCol:      rgba(181,101,29,0.55) !important;
+  --ec-frm-trmTtbBg:            #120f0b !important;
+  --ec-frm-trmTtbFg:            #c97a1f !important;
+  --ec-frm-trmTtbBrdBtmCol:     rgba(181,101,29,0.25) !important;
+  --ec-codeFg:                  #e8d8b8 !important;
+  --ec-codeBg:                  #1a1410 !important;
+  --ec-brdCol:                  rgba(181,101,29,0.40) !important;
+}
+
+/* ── 2. pre inside any frame ── */
+.expressive-code .frame pre,
+.expressive-code .frame.not-content pre,
+.expressive-code .frame.is-terminal pre {
+  background: #1a1410 !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #e8d8b8 !important;
+}
+
+/* ── 3. code, lines, and spans ── */
+.expressive-code .frame pre code,
+.expressive-code .frame .ec-line,
+.expressive-code .frame .ec-line span {
+  color: #e8d8b8 !important;
+  background: transparent !important;
+}
+
+/* ── 4. White/near-white Shiki tokens → readable cream ── */
+.expressive-code .frame .ec-line span[style*="--0:#fff"],
+.expressive-code .frame .ec-line span[style*="--0:#FFF"],
+.expressive-code .frame .ec-line span[style*="--0:#e6e6e6"],
+.expressive-code .frame .ec-line span[style*="--0:#e1e4e8"],
+.expressive-code .frame .ec-line span[style*="--0:#d4d4d4"],
+.expressive-code .frame .ec-line span[style*="--0:#cdd6f4"],
+.expressive-code .frame .ec-line span[style*="--0:#c9d1d9"],
+.expressive-code .frame .ec-line span[style*="--0:#abb2bf"],
+.expressive-code .frame .ec-line span[style*="color:#fff"],
+.expressive-code .frame .ec-line span[style*="color: #fff"],
+.expressive-code .frame .ec-line span[style*="color:rgb(255"],
+.expressive-code .frame .ec-line span[style*="color: rgb(255"] {
+  color: #e8d8b8 !important;
+}
+
+/* ── 5. Tab bar & title bar (filename tabs, terminal header) ── */
+.expressive-code .frame .title,
+.expressive-code .frame [class*="title"],
+.expressive-code .frame [class*="tab"],
+.expressive-code .frame header {
+  background: #120f0b !important;
+  color: #c97a1f !important;
+  border-bottom-color: rgba(181,101,29,0.25) !important;
+}
+
+/* Active tab highlight */
+.expressive-code .frame [class*="tab"][aria-selected="true"],
+.expressive-code .frame [class*="tab"].active {
+  background: #2a1f12 !important;
+  color: #e8d8b8 !important;
+  border-bottom-color: rgba(181,101,29,0.55) !important;
+}
+
+/* ── 6. Copy button ── */
+.expressive-code .frame button[class*="copy"],
+.expressive-code .frame [class*="copy-button"] {
+  background: #2a1f12 !important;
+  color: #c97a1f !important;
+  border-color: rgba(181,101,29,0.30) !important;
+}
+.expressive-code .frame button[class*="copy"]:hover {
+  background: #3a2a18 !important;
+  color: #e8d8b8 !important;
+}
+
+/* ── 7. Line numbers gutter ── */
+.expressive-code .frame .gutter,
+.expressive-code .frame [class*="line-number"] {
+  background: #150f0b !important;
+  color: #5a4a35 !important;
+  border-right-color: rgba(181,101,29,0.20) !important;
+}
+
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--anvil-border-dim);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--anvil-border-amber-strong); }
+
+/* ─── Selection ──────────────────────────────────────────────── */
+::selection {
+  background: rgba(181,101,29,0.28);
+  color: var(--anvil-text-strong);
+}
+
+/* ─── Focus ──────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--anvil-amber);
+  outline-offset: 3px;
+  border-radius: var(--anvil-radius-sm);
+}
+
+/* ─── Shared page layout helpers ─────────────────────────────── */
+.anvil-page {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 1.75rem 5rem;
+}
+
+.anvil-section { margin-top: 3.5rem; }
+
+.anvil-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--anvil-amber-deep);
+  margin-bottom: 1.25rem;
+}
+
+.anvil-title-accent {
+  color: var(--anvil-amber-deep);
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+/* ─── Card base ──────────────────────────────────────────────── */
+.anvil-card-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--anvil-border-subtle);
+  border: 1px solid var(--anvil-border-subtle);
+  border-radius: var(--anvil-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--anvil-shadow-sm);
+}
+
+.anvil-card {
+  background: var(--anvil-surface-0);
+  padding: 1.5rem;
+  transition: background 0.15s;
+}
+
+.anvil-card:hover { background: var(--anvil-surface-1); }
+
+/* ─── Terminal shared ────────────────────────────────────────── */
+.anvil-terminal {
+  border: 1px solid var(--anvil-border-amber);
+  border-radius: var(--anvil-radius-lg);
+  overflow: hidden;
+  background: var(--anvil-paper);
+  box-shadow: var(--anvil-shadow);
+}
+
+.anvil-terminal-bar {
+  background: var(--anvil-surface-2);
+  padding: 0.65rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-bottom: 1px solid var(--anvil-border-subtle);
+}
+
+.anvil-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.anvil-dot--red    { background: #d44535; }
+.anvil-dot--yellow { background: #c79320; }
+.anvil-dot--green  { background: #2f8f3f; }
+
+.anvil-terminal-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: var(--anvil-amber-deep);
+  margin: 0 auto;
+}
+
+.anvil-terminal-body {
+  background: #0a0905 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  color: #d4c9a8;
+}
+
+.t-comment { color: #5a5040; }
+.t-out     { color: #9e9278; }
+.t-success { color: var(--anvil-amber-high); font-weight: 600; }
+
+/* ─── Misc shared ────────────────────────────────────────────── */
+.anvil-link {
+  color: var(--anvil-amber-mid);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color 0.15s;
+}
+.anvil-link:hover { color: var(--anvil-amber-deep); }
+
+.anvil-note {
+  font-size: 0.78rem;
+  color: var(--anvil-text-muted);
+  line-height: 1.65;
+  margin-top: 0.85rem;
+}
+
+/* ─── Paper grain overlay (top-layer) ────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  mix-blend-mode: multiply;
+}
+
+/* ─── Built-in Starlight: hover/focus on links ───────────────── */
+/* Starlight defaults set hover to `--sl-color-white` which now
+   maps to ink — but for our cream theme we want a warm amber
+   highlight on hover and a soft amber-low background pill. */
+.sl-sidebar-state-persist a:hover,
+.sidebar a:hover,
+nav a:hover,
+nav summary:hover,
+.sl-toc a:hover,
+.right-sidebar a:hover,
+a:not(.anvil-btn):not(.anv-cta):hover {
+  color: var(--anvil-amber-deep) !important;
+}
+
+/* Buttons & CTAs: never let the global a:hover override their text colour */
+.anvil-btn:hover,
+.anvil-btn--primary:hover,
+.anv-cta:hover {
+  color: #fff8e7 !important;
+}
+.anvil-btn--secondary:hover {
+  color: var(--anvil-amber-deep) !important;
+}
+.anvil-btn--ghost:hover {
+  color: var(--anvil-amber-deep) !important;
+}
+
+/* Sidebar link hover pill + active row. */
+[data-has-sidebar] .sidebar a:hover,
+sidebar a:hover,
+.sidebar-content a:hover,
+.sl-sidebar .top-level a:hover,
+.sl-sidebar a[aria-current]:hover,
+.sl-sidebar a.large:hover,
+.sl-sidebar nav a:hover {
+  background: var(--anvil-amber-low) !important;
+  color: var(--anvil-amber-deep) !important;
+  border-radius: var(--anvil-radius-xs);
+}
+
+/* Sidebar group label (the "Start here", "Spec", "Operations"… text). */
+.sl-sidebar summary,
+.sl-sidebar details > summary > .group-label,
+.sl-sidebar .group-label,
+.sl-sidebar h2,
+.sidebar-content summary,
+.sidebar-content h2 {
+  color: var(--anvil-amber-deep) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.72rem !important;
+}
+
+/* Active page in sidebar — darker amber pill. */
+.sl-sidebar a[aria-current='page'],
+.sidebar a[aria-current='page'],
+nav a[aria-current='page'] {
+  background: var(--anvil-amber) !important;
+  color: #fff8e7 !important;
+  font-weight: 700;
+  border-radius: var(--anvil-radius-xs);
+}
+
+/* ─── Ambient amber radial bg ────────────────────────────────── */
+.anvil-ambient {
+  position: fixed;
+  top: -20vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80vw;
+  height: 50vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(181,101,29,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Math glyph background band ─────────────────────────────── */
+.anvil-math-band {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, #000 25%, transparent 70%);
+          mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, #000 25%, transparent 70%);
+}
+.anvil-math-band span {
+  position: absolute;
+  font-family: var(--anvil-font-math);
+  color: var(--anvil-amber-deep);
+  opacity: 0.07;
+  white-space: nowrap;
+  font-weight: 500;
+  user-select: none;
+}
+
+/* ─── KaTeX theme integration (light) ────────────────────────── */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1.1rem 1.4rem;
+  margin: 1.5rem 0;
+  background: var(--anvil-paper);
+  border: 1px solid var(--anvil-border-amber);
+  border-left: 3px solid var(--anvil-amber);
+  border-radius: var(--anvil-radius);
+  box-shadow: var(--anvil-shadow-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--anvil-border-dim) transparent;
+}
+
+.katex-display > .katex {
+  text-align: left;
+  color: var(--anvil-ink);
+}
+
+.katex {
+  font-size: 1em;
+  color: var(--anvil-ink);
+}
+
+.katex .mord.text,
+.katex .mord.texttt {
+  font-family: var(--anvil-font-mono);
+}
+
+.katex .boxed {
+  border-color: var(--anvil-amber) !important;
+  background: var(--anvil-amber-glow);
+  border-radius: var(--anvil-radius-xs);
+  padding: 0.15em 0.4em;
+}
+
+.katex-display::-webkit-scrollbar { height: 4px; }
+.katex-display::-webkit-scrollbar-track { background: transparent; }
+.katex-display::-webkit-scrollbar-thumb {
+  background: var(--anvil-border-dim);
+  border-radius: 999px;
+}
+.katex-display::-webkit-scrollbar-thumb:hover {
+  background: var(--anvil-border-amber-strong);
+}
+
+/* ── Starlight / Markdown content container ─────────────────── */
+.sl-markdown-content .katex-display {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* ── Starlight surface tweaks (cards, headings) ─────────────── */
+/* Keep these TRANSPARENT so the math-glyph watermark on <body>
+   bleeds through. The page already inherits cream from body. */
+.sl-container, .main-frame, main { background: transparent !important; }
+
+.sl-markdown-content :is(p, li, td) { color: var(--anvil-text); }
+.sl-markdown-content strong { color: var(--anvil-text-strong); }
+
+/* Inline math accent dots used in markdown */
+.math-bullet {
+  color: var(--anvil-amber);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}

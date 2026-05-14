@@ -1,0 +1,57 @@
+name: ci-rust
+
+on:
+  push:
+    paths:
+      - "cli/**"
+      - ".github/workflows/ci-rust.yml"
+  pull_request:
+    paths:
+      - "cli/**"
+      - ".github/workflows/ci-rust.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  fmt:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
+      - name: cargo fmt --check
+        working-directory: cli
+        run: cargo fmt --all -- --check
+
+  clippy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: clippy }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: cli }
+      - name: cargo clippy
+        working-directory: cli
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: cli }
+      - name: cargo check
+        working-directory: cli
+        run: cargo check --release
+      - name: cargo test
+        working-directory: cli
+        run: cargo test --release

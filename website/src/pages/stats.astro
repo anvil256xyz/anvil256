@@ -1,0 +1,546 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import Navbar from "../components/Navbar.astro";
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Live Stats",
+    description: "On-chain Anvil256 state, read directly from your browser via viem.",
+  }}
+>
+
+<div class="anvil-ambient" aria-hidden="true"></div>
+<Navbar activePage="stats" />
+
+<!-- ── Page header ─────────────────────────────────────────── -->
+<div class="anvil-page-header">
+  <span class="anvil-page-eyebrow">
+    <span class="anvil-title-accent">◆</span> READS · viem · Base L2
+  </span>
+  <h1 class="anvil-page-title">Live Stats <span class="anvil-page-title-accent">⟨ on-chain ⟩</span></h1>
+  <p class="anvil-page-desc">
+    On-chain data read directly from Base L2 — no proxy, no backend.
+    Every value below is the literal output of a <code>view</code> call against the deployed contract.
+  </p>
+
+  <div class="anvil-status-bar">
+    <span id="status-dot" class="anvil-status-dot anvil-status-dot--loading"></span>
+    <span id="status-text" class="anvil-status-text">Connecting…</span>
+    <span id="last-updated" class="anvil-status-ts"></span>
+  </div>
+</div>
+
+<!-- ── RPC notice ──────────────────────────────────────────── -->
+<div class="anvil-rpc-notice">
+  <span class="anvil-notice-icon" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 1L15 13.5H1L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </span>
+  <div class="anvil-notice-content">
+    <p class="anvil-notice-title">Reads from your RPC</p>
+    <p class="anvil-notice-body">
+      Your queries go directly to Base L2 — we never proxy them. Override the endpoint via:
+    </p>
+    <pre class="anvil-inline-pre"><code>localStorage.setItem("anvil256:rpc", "https://mainnet.base.org "); location.reload();</code></pre>
+  </div>
+</div>
+
+<!-- ── Primary stats ───────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-stats-primary">
+
+    <div class="anvil-stat-hero">
+      <p class="anvil-stat-label"><span class="anvil-stat-sym">n</span> Current Epoch</p>
+      <p id="epoch" class="anvil-stat-value anvil-stat-value--xl">—</p>
+      <p class="anvil-stat-sub">confirmed <code>mine()</code> calls on-chain</p>
+    </div>
+
+    <div class="anvil-stats-aside">
+
+      <div class="anvil-stat-card">
+        <p class="anvil-stat-label"><span class="anvil-stat-sym">R(n)</span> Current Reward</p>
+        <p id="reward" class="anvil-stat-value">—</p>
+        <p class="anvil-stat-sub">ANVL per successful <code>mine()</code></p>
+      </div>
+
+      <div class="anvil-stat-card">
+        <p class="anvil-stat-label"><span class="anvil-stat-sym">∑</span> Total Supply</p>
+        <p id="supply" class="anvil-stat-value">—</p>
+        <div class="anvil-bar-wrap">
+          <div class="anvil-bar">
+            <div id="supply-fill" class="anvil-bar-fill anvil-bar-fill--amber" style="width:0%"></div>
+          </div>
+          <span id="supply-pct" class="anvil-bar-pct">0%</span>
+        </div>
+        <p class="anvil-stat-sub">of 21,000,000 ANVL max</p>
+      </div>
+
+      <div class="anvil-stat-card">
+        <p class="anvil-stat-label"><span class="anvil-stat-sym">φ</span> Protocol Fee</p>
+        <p id="fee" class="anvil-stat-value">—</p>
+        <p class="anvil-stat-sub">oracle-priced ≈ $0.10 USD (native ETH)</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Controller & NCT state ──────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Controller State
+    </span>
+  </div>
+
+  <div class="anvil-stats-grid">
+
+    <div class="anvil-stat-card anvil-stat-card--mono">
+      <p class="anvil-stat-label"><span class="anvil-stat-sym">D[n]</span> Difficulty</p>
+      <p id="difficulty" class="anvil-stat-mono">—</p>
+      <p id="difficulty-bits" class="anvil-stat-sub">— bits of work</p>
+    </div>
+
+    <div class="anvil-stat-card">
+      <p class="anvil-stat-label">
+        <span class="anvil-stat-sym">I</span> Integral Error
+        <em class="anvil-label-note">PI state</em>
+      </p>
+      <p id="integ" class="anvil-stat-value anvil-stat-value--md">—</p>
+      <div class="anvil-bar-wrap">
+        <div class="anvil-bar anvil-bar--integ">
+          <div id="integ-fill" class="anvil-bar-fill anvil-bar-fill--amber" style="left:50%;width:0%"></div>
+          <div class="anvil-bar-center"></div>
+        </div>
+      </div>
+      <p class="anvil-stat-sub">range ±4.0 · WAD (anti-windup)</p>
+    </div>
+
+    <div class="anvil-stat-card">
+      <p class="anvil-stat-label">
+        <span class="anvil-stat-sym">C<sub>u</sub></span> Unique Miners <small>(NCT)</small>
+        <em class="anvil-label-note">256-epoch window</em>
+      </p>
+      <p id="unique-miners" class="anvil-stat-value anvil-stat-value--md">—</p>
+      <div class="anvil-bar-wrap">
+        <div class="anvil-bar">
+          <div id="unique-fill" class="anvil-bar-fill anvil-bar-fill--green" style="width:0%"></div>
+        </div>
+        <span id="unique-pct" class="anvil-bar-pct">—</span>
+      </div>
+      <p class="anvil-stat-sub">higher = more distributed = lower NCT pressure</p>
+    </div>
+
+    <div class="anvil-stat-card">
+      <p class="anvil-stat-label">
+        <span class="anvil-stat-sym">C</span> Concentration Factor
+        <em class="anvil-label-note">NCT signal</em>
+      </p>
+      <p id="concentration" class="anvil-stat-value anvil-stat-value--md">—</p>
+      <p class="anvil-stat-sub">C = 1.0 fully distributed · C = 256 one miner</p>
+    </div>
+
+    <div class="anvil-stat-card">
+      <p class="anvil-stat-label"><span class="anvil-stat-sym">P</span> Adjustment Period</p>
+      <p id="period" class="anvil-stat-value anvil-stat-value--md">—</p>
+      <p class="anvil-stat-sub">2,016 epochs per period</p>
+    </div>
+
+    <div class="anvil-stat-card">
+      <p class="anvil-stat-label"><span class="anvil-stat-sym">⌊n/H⌋</span> Halving</p>
+      <p id="halving" class="anvil-stat-value anvil-stat-value--md">—</p>
+      <p class="anvil-stat-sub">next halving at epoch 210,000 × (n+1)</p>
+    </div>
+
+    <div class="anvil-stat-card anvil-stat-card--wide">
+      <p class="anvil-stat-label">
+        <span class="anvil-stat-sym">η</span> Fee Recipient
+        <em class="anvil-label-note">immutable</em>
+      </p>
+      <p id="recipient" class="anvil-stat-mono anvil-stat-mono--addr">—</p>
+      <p class="anvil-stat-sub">constructor-enforced ≠ deployer</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Epoch entropy ────────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Cascade PoW State
+    </span>
+  </div>
+  <div class="anvil-stat-card anvil-stat-card--mono" style="border:1px solid var(--anvil-border-amber);border-radius:var(--anvil-radius-lg);box-shadow:0 4px 14px rgba(80,55,15,0.08);">
+    <p class="anvil-stat-label"><span class="anvil-stat-sym">ε[n]</span> Current Epoch Entropy</p>
+    <p id="epoch-entropy" class="anvil-stat-mono">—</p>
+    <p class="anvil-stat-sub">ε[n] = keccak256( blockhash(lastMineBlock) ∥ currentDifficulty ) — rotates every epoch</p>
+  </div>
+</section>
+
+<p class="anvil-refresh-note">↻ Auto-refreshes every 15 s via viem from your configured RPC.</p>
+
+<script>
+import { client, anvil256Abi, ANVIL256_ADDRESS } from "@/lib/viem-client";
+import { formatUnits } from "viem";
+
+const MAX_SUPPLY = 21_000_000;
+const WINDOW_SIZE = 256;
+
+function el(id: string) { return document.getElementById(id) as HTMLElement; }
+
+function setStatus(state: "ok" | "error" | "loading", msg: string) {
+  const dot  = el("status-dot");
+  const text = el("status-text");
+  dot.className = `anvil-status-dot anvil-status-dot--${state}`;
+  text.textContent = msg;
+}
+
+function log2Floor(n: bigint): number {
+  if (n <= 0n) return 0;
+  let r = 0; let v = n;
+  if (v >= 1n << 128n) { r += 128; v >>= 128n; }
+  if (v >= 1n <<  64n) { r +=  64; v >>=  64n; }
+  if (v >= 1n <<  32n) { r +=  32; v >>=  32n; }
+  if (v >= 1n <<  16n) { r +=  16; v >>=  16n; }
+  if (v >= 1n <<   8n) { r +=   8; v >>=   8n; }
+  if (v >= 1n <<   4n) { r +=   4; v >>=   4n; }
+  if (v >= 1n <<   2n) { r +=   2; v >>=   2n; }
+  if (v >= 1n <<   1n) { r +=   1; }
+  return r;
+}
+
+async function refresh() {
+  try {
+    setStatus("loading", "Fetching…");
+    const [
+      epoch, difficulty, reward, supply, feeWei,
+      recipient, integ, period,
+      epochEntropy,
+    ] = await Promise.all([
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "currentEpoch" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "currentDifficulty" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "currentReward" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "totalSupply" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "currentFeeWei" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "feeRecipient" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "integralErrorWad" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "periodIndex" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "epochEntropy" }),
+    ]);
+
+    const epochNum = Number(epoch as bigint);
+    el("epoch").textContent  = epochNum.toLocaleString();
+    el("reward").textContent = `${parseFloat(formatUnits(reward as bigint, 18)).toLocaleString(undefined, { maximumFractionDigits: 8 })} ANVL`;
+
+    const supplyNum = parseFloat(formatUnits(supply as bigint, 18));
+    el("supply").textContent = supplyNum.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    const pct = Math.min((supplyNum / MAX_SUPPLY) * 100, 100);
+    (document.getElementById("supply-fill") as HTMLElement).style.width = `${pct}%`;
+    el("supply-pct").textContent = `${pct.toFixed(4)}%`;
+
+    el("fee").textContent = `${formatUnits(feeWei as bigint, 18)} ETH`;
+
+    el("difficulty").textContent = `0x${(difficulty as bigint).toString(16).padStart(64, "0")}`;
+    el("difficulty-bits").textContent = `${256 - log2Floor(difficulty as bigint)} bits of work`;
+
+    const integReal = Number(integ as bigint) / 1e18;
+    el("integ").textContent = integReal.toFixed(6);
+    const integPct = Math.min(Math.abs(integReal) / 4.0 * 50, 50);
+    const fill = document.getElementById("integ-fill") as HTMLElement;
+    if (integReal >= 0) {
+      fill.style.left = "50%"; fill.style.width = `${integPct}%`;
+      fill.classList.remove("anvil-bar-fill--blue");
+    } else {
+      fill.style.left = `${50 - integPct}%`; fill.style.width = `${integPct}%`;
+      fill.classList.add("anvil-bar-fill--blue");
+    }
+
+    el("period").textContent = `#${Number(period as bigint).toLocaleString()}`;
+    el("recipient").textContent = String(recipient);
+
+    // NCT — uniqueCount not yet exposed as external view on the contract.
+    // MinerWindow._window is private. Show placeholder until a view is added.
+    const unique = 0; // TODO: expose uniqueCount via IAnvil256
+    el("unique-miners").textContent = unique === 0 ? "—" : `${unique} / ${WINDOW_SIZE}`;
+    const uniquePct = unique > 0 ? (unique / WINDOW_SIZE) * 100 : 0;
+    (document.getElementById("unique-fill") as HTMLElement).style.width = `${uniquePct}%`;
+    el("unique-pct").textContent = unique > 0 ? `${uniquePct.toFixed(1)}%` : "—";
+
+    const C = unique > 0 ? WINDOW_SIZE / unique : 0;
+    el("concentration").textContent = unique > 0 ? `C = ${C.toFixed(2)}` : "—";
+
+    // Halving
+    const halvingNum = Math.floor(epochNum / 210_000);
+    const nextHalvingEpoch = (halvingNum + 1) * 210_000;
+    const epochsUntil = nextHalvingEpoch - epochNum;
+    el("halving").textContent = `#${halvingNum} — next in ${epochsUntil.toLocaleString()} epochs`;
+
+    // Epoch entropy
+    const entropyHex = `0x${(epochEntropy as bigint).toString(16).padStart(64, "0")}`;
+    el("epoch-entropy").textContent = entropyHex;
+
+    setStatus("ok", "Live");
+    el("last-updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  } catch (e: any) {
+    setStatus("error", `Error: ${e?.shortMessage ?? e?.message ?? "unknown"}`);
+    console.error("stats refresh failed", e);
+  }
+}
+
+refresh();
+setInterval(refresh, 15_000);
+</script>
+
+<style>
+  /* ── Local fallback vars ───────────────────────────────────── */
+  :root {
+    --anvil-amber:        #b5651d;
+    --anvil-amber-mid:    #8c4d12;
+    --anvil-amber-deep:   #6d3a08;
+    --anvil-amber-low:    #f7e7c4;
+    --anvil-amber-pale:   #fcedcf;
+    --anvil-amber-glow:   rgba(181,101,29,0.12);
+    --anvil-border-amber: rgba(181,101,29,0.32);
+    --anvil-border-subtle:rgba(15,13,8,0.10);
+    --anvil-border-dim:   rgba(15,13,8,0.18);
+    --anvil-surface-0:    #fbf5e4;
+    --anvil-surface-1:    #f3ead2;
+    --anvil-surface-2:    #ece1bd;
+    --anvil-paper:        #fcf8ec;
+    --anvil-text:         #0f0d08;
+    --anvil-text-muted:   #574d3b;
+    --anvil-text-faint:   #8a7e64;
+  }
+
+  .anvil-page-header {
+    padding: 2.5rem 0 1.5rem;
+    border-bottom: 1px solid var(--anvil-border-amber);
+    margin-bottom: 1.75rem;
+  }
+  .anvil-page-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    padding: 0.25rem 0.7rem;
+    background: var(--anvil-amber-low);
+    border: 1px solid var(--anvil-border-amber);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+  }
+  .anvil-page-title {
+    font-size: 2rem; font-weight: 800;
+    letter-spacing: -0.03em; margin: 0 0 0.5rem;
+    color: var(--anvil-text);
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
+  }
+  .anvil-page-title-accent {
+    font-family: 'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--anvil-amber-deep);
+    opacity: 0.85;
+    letter-spacing: 0;
+  }
+  .anvil-page-desc {
+    font-size: 0.86rem; color: var(--anvil-text-muted);
+    margin: 0 0 1rem; line-height: 1.7;
+    max-width: 50rem;
+  }
+  .anvil-status-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.7rem; color: var(--anvil-text-muted);
+    padding: 0.35rem 0.7rem;
+    background: var(--anvil-paper);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: 999px;
+    width: fit-content;
+    max-width: 100%;
+  }
+  .anvil-status-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .anvil-status-dot--loading { background: var(--anvil-amber); animation: blink 1.1s infinite; }
+  .anvil-status-dot--ok      { background: #2f8f3f; box-shadow: 0 0 6px rgba(47,143,63,0.55); }
+  .anvil-status-dot--error   { background: #d44535; }
+  @keyframes blink { 0%,100% { opacity:0.2; } 50% { opacity:1; } }
+  .anvil-status-ts { margin-left: 0.5rem; color: var(--anvil-text-faint); }
+
+  .anvil-rpc-notice {
+    display: flex; gap: 0.9rem; align-items: flex-start;
+    background: var(--anvil-amber-pale);
+    border: 1px solid var(--anvil-border-amber);
+    border-left: 3px solid var(--anvil-amber);
+    border-radius: var(--anvil-radius);
+    padding: 1rem 1.2rem; margin-bottom: 0;
+  }
+  .anvil-notice-icon { color: var(--anvil-amber-deep); flex-shrink: 0; margin-top: 2px; }
+  .anvil-notice-content { min-width: 0; }
+  .anvil-notice-title { font-size: 0.8rem; font-weight: 700; color: var(--anvil-amber-deep); margin: 0 0 0.2rem; }
+  .anvil-notice-body { font-size: 0.76rem; color: var(--anvil-text); margin: 0 0 0.6rem; line-height: 1.6; }
+  .anvil-inline-pre {
+    background: #1a1410 !important;
+    border: 1px solid rgba(181,101,29,0.40) !important;
+    border-left: 3px solid var(--anvil-amber) !important;
+    border-radius: 6px !important;
+    color: #e8d8b8 !important;
+    padding: 0.6rem 0.9rem !important;
+    font-size: 0.7rem !important;
+    margin: 0 !important;
+    white-space: pre-wrap;
+    word-break: break-all;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.20) !important;
+  }
+  .anvil-inline-pre code {
+    background: transparent !important;
+    border: none !important;
+    color: #e8d8b8 !important;
+    padding: 0 !important;
+    font-size: inherit !important;
+  }
+
+  .anvil-section { margin-top: 2.25rem; }
+  .anvil-section-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 1rem;
+  }
+  .anvil-section-label {
+    font-size: 0.67rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    display: flex; align-items: center; gap: 0.45rem;
+  }
+  .anvil-title-accent { color: var(--anvil-amber-deep); font-size: 0.58rem; font-weight: 800; }
+  .anvil-page-desc code,
+  .anvil-stat-sub code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+    font-size: 0.82em !important;
+    background: var(--anvil-amber-pale) !important;
+    color: var(--anvil-amber-deep) !important;
+    border: 1px solid var(--anvil-border-amber) !important;
+    border-radius: 4px !important;
+    padding: 0.06em 0.38em !important;
+  }
+
+  .anvil-stats-primary {
+    display: grid; grid-template-columns: 1fr 2fr;
+    gap: 1px; background: var(--anvil-border-subtle);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg); overflow: hidden;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-stat-hero {
+    background: var(--anvil-amber-pale);
+    padding: 2rem 1.5rem;
+    display: flex; flex-direction: column;
+    justify-content: center; gap: 0.25rem;
+    border-right: 1px solid var(--anvil-border-amber);
+  }
+  .anvil-stats-aside {
+    display: grid; grid-template-rows: repeat(3, 1fr);
+    gap: 1px; background: var(--anvil-border-subtle);
+  }
+  .anvil-stat-card {
+    background: var(--anvil-surface-0);
+    padding: 1.2rem 1.4rem;
+    display: flex; flex-direction: column;
+    gap: 0.2rem; min-width: 0; transition: background 0.12s;
+  }
+  .anvil-stat-card:hover { background: var(--anvil-surface-1); }
+  .anvil-stat-sym {
+    display: inline-block;
+    font-family: 'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+    font-style: italic;
+    color: var(--anvil-amber);
+    font-size: 0.95em;
+    font-weight: 600;
+    margin-right: 0.35em;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .anvil-stat-sym sub { font-size: 0.7em; font-style: normal; }
+  .anvil-stat-card--wide { grid-column: 1 / -1; }
+  .anvil-stat-card--mono { overflow: hidden; }
+  .anvil-stat-label {
+    font-size: 0.63rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--anvil-text-muted); margin: 0;
+    display: flex; align-items: center; gap: 0.2rem; flex-wrap: wrap;
+  }
+  .anvil-stat-label small { font-size: 0.85em; opacity: 0.8; }
+  .anvil-label-note {
+    font-style: normal; font-weight: 400;
+    color: var(--anvil-amber-deep); font-size: 0.9em;
+    margin-left: 0.3rem;
+  }
+  .anvil-stat-value {
+    font-size: 1.7rem; font-weight: 700;
+    color: var(--anvil-text); letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; margin: 0.15rem 0;
+  }
+  .anvil-stat-value--xl { font-size: 2.6rem; letter-spacing: -0.03em; color: var(--anvil-amber-deep); }
+  .anvil-stat-value--md { font-size: 1.3rem; }
+  .anvil-stat-sub { font-size: 0.7rem; color: var(--anvil-text-muted); margin: 0; line-height: 1.55; }
+  .anvil-stat-mono {
+    font-family: var(--anvil-font-mono, monospace);
+    font-size: 0.62rem; color: var(--anvil-amber-deep);
+    word-break: break-all; margin: 0.2rem 0;
+    line-height: 1.65;
+  }
+  .anvil-stat-mono--addr { font-size: 0.68rem; }
+
+  .anvil-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 1px; background: var(--anvil-border-subtle);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg); overflow: hidden;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+
+  .anvil-bar-wrap { display: flex; align-items: center; gap: 0.5rem; margin: 0.35rem 0 0.15rem; }
+  .anvil-bar {
+    flex: 1; height: 6px;
+    background: var(--anvil-surface-2);
+    border-radius: 999px; overflow: hidden; position: relative;
+    border: 1px solid var(--anvil-border-faint, rgba(15,13,8,0.06));
+  }
+  .anvil-bar--integ { overflow: visible; }
+  .anvil-bar-fill {
+    position: absolute; top: 0; height: 100%;
+    border-radius: 999px; transition: width 0.65s ease, left 0.65s ease;
+  }
+  .anvil-bar-fill--amber { background: linear-gradient(90deg, var(--anvil-amber-mid), var(--anvil-amber)); }
+  .anvil-bar-fill--blue  { background: linear-gradient(90deg, #3d5dcc, #6f8fec); }
+  .anvil-bar-fill--green { background: linear-gradient(90deg, #1a7a3a, #4faf5f); }
+  .anvil-bar-center {
+    position: absolute; left: 50%; top: -2px;
+    width: 2px; height: 10px;
+    background: var(--anvil-amber-deep); transform: translateX(-50%);
+  }
+  .anvil-bar-pct {
+    font-size: 0.63rem; color: var(--anvil-amber-deep);
+    font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0;
+    font-weight: 600;
+  }
+  .anvil-refresh-note {
+    margin-top: 1.75rem; font-size: 0.7rem;
+    color: var(--anvil-text-faint); letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 640px) {
+    .anvil-stats-primary { grid-template-columns: 1fr; }
+    .anvil-stat-hero { border-right: none; border-bottom: 1px solid var(--anvil-border-amber); }
+    .anvil-stats-aside { grid-template-rows: auto; }
+    .anvil-stat-value--xl { font-size: 2.1rem; }
+    .anvil-page-title { font-size: 1.55rem; }
+    .anvil-rpc-notice { flex-direction: column; }
+  }
+</style>
+
+</StarlightPage>

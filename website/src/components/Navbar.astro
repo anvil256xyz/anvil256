@@ -1,0 +1,460 @@
+---
+interface Props {
+  activePage?: "home" | "stats" | "download" | "docs";
+}
+const { activePage = "home" } = Astro.props;
+
+const links = [
+  { href: "/",                 label: "Home",        key: "home"        },
+  { href: "/stats",           label: "Live Stats",  key: "stats"       },
+  { href: "/download",        label: "Downloads",   key: "download"    },
+  { href: "/whitepaper",       label: "Docs",        key: "docs"        },
+];
+---
+
+<header class="anv-nav" id="anv-nav">
+  <div class="anv-nav-inner">
+
+    <!-- Logo -->
+    <a href="/" class="anv-logo" aria-label="Anvil256 home">
+      <span class="anv-logo-icon" aria-hidden="true">
+        <img src="/logo.png" alt="" class="anv-logo-img" width="28" height="28" />
+      </span>
+      <span class="anv-logo-wordmark">
+        <span class="anv-logo-anvil">Anvil</span><span class="anv-logo-num">256</span>
+      </span>
+    </a>
+
+    <!-- Desktop nav links -->
+    <nav class="anv-links" aria-label="Primary navigation">
+      {links.map(l => (
+        <a
+          href={l.href}
+          class={`anv-link${activePage === l.key ? " anv-link--active" : ""}`}
+          aria-current={activePage === l.key ? "page" : undefined}
+        >
+          {l.label}
+          {activePage === l.key && <span class="anv-link-pip" aria-hidden="true" />}
+        </a>
+      ))}
+    </nav>
+
+    <!-- Right cluster -->
+    <div class="anv-nav-right">
+      <a
+        href="https://github.com/anvil256xyz/anvil256"
+        class="anv-gh"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Anvil256 on GitHub"
+      >
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        <span class="anv-gh-label">GitHub</span>
+      </a>
+
+       <a href="/download" class="anv-cta" aria-label="Start Mining">
+        <span class="anv-cta-dot" aria-hidden="true"></span>
+        Start Mining
+      </a>
+
+      <!-- Mobile hamburger -->
+      <button
+        id="anv-menu-btn"
+        class="anv-hamburger"
+        aria-label="Open navigation menu"
+        aria-expanded="false"
+        aria-controls="anv-mobile-menu"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="anv-mobile-menu" class="anv-mobile" hidden role="navigation" aria-label="Mobile navigation">
+    <div class="anv-mobile-inner">
+      {links.map(l => (
+        <a
+          href={l.href}
+          class={`anv-mobile-link${activePage === l.key ? " anv-mobile-link--active" : ""}`}
+          aria-current={activePage === l.key ? "page" : undefined}
+        >
+          <span class="anv-mobile-link-text">{l.label}</span>
+          {activePage === l.key && <span class="anv-mobile-pip" aria-hidden="true" />}
+        </a>
+      ))}
+      <div class="anv-mobile-sep"></div>
+      <a
+        href="https://github.com/anvil256xyz/anvil256"
+        class="anv-mobile-link anv-mobile-link--gh"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        <span class="anv-mobile-link-text">GitHub ↗</span>
+      </a>
+       <a href="/download" class="anv-mobile-cta">
+        <span class="anv-cta-dot" aria-hidden="true"></span>
+        Start Mining
+      </a>
+    </div>
+  </div>
+</header>
+
+<style>
+  /* ── Shell ────────────────────────────────────────────── */
+  :root {
+    --anvil-amber:        #b5651d;
+    --anvil-amber-mid:    #8c4d12;
+    --anvil-amber-deep:   #6d3a08;
+    --anvil-amber-low:    #f7e7c4;
+    --anvil-amber-glow:   rgba(181,101,29,0.12);
+    --anvil-border-amber: rgba(181,101,29,0.32);
+    --anvil-border-subtle:rgba(15,13,8,0.10);
+    --anvil-paper:        #fcf8ec;
+    --anvil-text:         #0f0d08;
+    --anvil-text-muted:   #574d3b;
+    --anvil-text-faint:   #8a7e64;
+  }
+
+  .anv-nav {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    background: rgba(252,248,236,0.92);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border-bottom: 1px solid var(--anvil-border-subtle);
+    font-family: var(--anvil-font-display);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .anv-nav.anv-nav--scrolled,
+  .anv-nav:hover {
+    border-bottom-color: var(--anvil-border-amber);
+    box-shadow: 0 1px 0 var(--anvil-amber-glow), 0 4px 18px rgba(80,55,15,0.10);
+  }
+
+  /* ── Inner row ────────────────────────────────────────── */
+  .anv-nav-inner {
+    display: flex;
+    align-items: center;
+    height: 58px;
+    padding: 0 2rem;
+    max-width: 82rem;
+    margin: 0 auto;
+    gap: 0.5rem;
+  }
+
+  /* ── Logo ─────────────────────────────────────────────── */
+  .anv-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    margin-right: 2rem;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+  .anv-logo:hover { opacity: 0.8; }
+
+  .anv-logo-icon {
+    color: var(--anvil-amber);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(181,101,29,0.32));
+    transition: filter 0.3s, transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .anv-logo-img {
+    display: block;
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+  .anv-logo:hover .anv-logo-icon {
+    filter: drop-shadow(0 0 10px rgba(181,101,29,0.55));
+    transform: scale(1.08);
+  }
+
+  .anv-logo-wordmark {
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .anv-logo-anvil { color: var(--anvil-text); }
+  .anv-logo-num   { color: var(--anvil-amber-deep); font-weight: 800; }
+
+  /* ── Desktop links ────────────────────────────────────── */
+  .anv-links {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex: 1;
+  }
+
+  .anv-link {
+    position: relative;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--anvil-text-muted);
+    text-decoration: none;
+    padding: 0.38rem 0.75rem;
+    border-radius: var(--anvil-radius-sm);
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .anv-link:hover {
+    color: var(--anvil-amber-deep);
+    background: rgba(181,101,29,0.07);
+  }
+  .anv-link--active {
+    color: var(--anvil-amber-deep);
+    background: var(--anvil-amber-low);
+  }
+
+  /* Active underline pip */
+  .anv-link-pip {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--anvil-amber), var(--anvil-amber-deep));
+    border-radius: 999px;
+  }
+
+  /* ── Right cluster ────────────────────────────────────── */
+  .anv-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  /* GitHub */
+  .anv-gh {
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--anvil-text-muted);
+    text-decoration: none;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-sm);
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .anv-gh:hover {
+    color: var(--anvil-amber-deep);
+    border-color: var(--anvil-amber);
+    background: var(--anvil-amber-low);
+  }
+  .anv-gh svg { flex-shrink: 0; }
+
+  /* Mining CTA */
+  .anv-cta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff8e7 !important;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--anvil-amber) 0%, var(--anvil-amber-deep) 100%);
+    border: 1px solid var(--anvil-amber-deep);
+    padding: 0.4rem 1.05rem;
+    border-radius: var(--anvil-radius-sm);
+    white-space: nowrap;
+    transition: filter 0.2s, transform 0.18s, box-shadow 0.2s;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  .anv-cta:hover {
+    color: #fff8e7 !important;
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(181,101,29,0.35);
+  }
+
+  .anv-cta-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,248,231,0.75);
+    animation: anv-pulse 2.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes anv-pulse {
+    0%, 100% { transform: scale(1);   opacity: 0.5; }
+    50%       { transform: scale(1.6); opacity: 1.0; }
+  }
+
+  /* ── Hamburger ────────────────────────────────────────── */
+  .anv-hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 38px;
+    height: 38px;
+    padding: 9px;
+    background: none;
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-sm);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .anv-hamburger:hover {
+    border-color: var(--anvil-amber);
+    background: var(--anvil-amber-low);
+  }
+  .anv-hamburger span {
+    display: block;
+    height: 1.5px;
+    background: var(--anvil-text);
+    border-radius: 2px;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), opacity 0.2s;
+    transform-origin: center;
+  }
+  .anv-hamburger[aria-expanded="true"] span           { background: var(--anvil-amber-deep); }
+  .anv-hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .anv-hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .anv-hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* ── Mobile menu ──────────────────────────────────────── */
+  .anv-mobile[hidden] { display: none; }
+  .anv-mobile {
+    border-top: 1px solid var(--anvil-border-amber);
+    background: rgba(252,248,236,0.98);
+  }
+  .anv-mobile-inner {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 1.25rem 1.25rem;
+    max-width: 82rem;
+    margin: 0 auto;
+    gap: 0.1rem;
+  }
+  .anv-mobile-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--anvil-text-muted);
+    text-decoration: none;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--anvil-radius-sm);
+    transition: color 0.15s, background 0.15s;
+  }
+  .anv-mobile-link:hover {
+    color: var(--anvil-amber-deep);
+    background: rgba(181,101,29,0.06);
+  }
+  .anv-mobile-link--active {
+    color: var(--anvil-amber-deep);
+    background: var(--anvil-amber-low);
+  }
+  .anv-mobile-link--gh { color: var(--anvil-text-muted); gap: 0.5rem; justify-content: flex-start; }
+  .anv-mobile-pip {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--anvil-amber);
+    box-shadow: 0 0 7px rgba(181,101,29,0.55);
+    flex-shrink: 0;
+  }
+  .anv-mobile-sep {
+    height: 1px;
+    background: var(--anvil-border-subtle);
+    margin: 0.5rem 0.9rem;
+  }
+  .anv-mobile-cta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff8e7 !important;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--anvil-amber) 0%, var(--anvil-amber-deep) 100%);
+    border: 1px solid var(--anvil-amber-deep);
+    padding: 0.6rem 1rem;
+    border-radius: var(--anvil-radius-sm);
+    margin-top: 0.5rem;
+    justify-content: center;
+    transition: filter 0.2s;
+  }
+  .anv-mobile-cta:hover { filter: brightness(1.08); }
+
+  /* ── Responsive ───────────────────────────────────────── */
+  @media (max-width: 920px) {
+    .anv-gh-label { display: none; }
+    .anv-gh { padding: 0.4rem 0.6rem; }
+  }
+  @media (max-width: 740px) {
+    .anv-links { display: none; }
+    .anv-cta   { display: none; }
+    .anv-hamburger { display: flex; }
+    .anv-nav-inner { padding: 0 1.25rem; }
+  }
+  @media (max-width: 480px) {
+    .anv-nav-inner { padding: 0 1rem; }
+  }
+</style>
+
+<script>
+  const btn  = document.getElementById("anv-menu-btn") as HTMLButtonElement | null;
+  const menu = document.getElementById("anv-mobile-menu") as HTMLElement | null;
+  const nav  = document.getElementById("anv-nav") as HTMLElement | null;
+
+  // Scrolled state for shadow
+  if (nav) {
+    window.addEventListener("scroll", () => {
+      nav.classList.toggle("anv-nav--scrolled", window.scrollY > 8);
+    }, { passive: true });
+  }
+
+  if (btn && menu) {
+    btn.addEventListener("click", () => {
+      const isOpen = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!isOpen));
+      btn.setAttribute("aria-label", isOpen ? "Open navigation menu" : "Close navigation menu");
+      menu.hidden = isOpen;
+    });
+    document.addEventListener("click", (e) => {
+      if (!btn.contains(e.target as Node) && !menu.contains(e.target as Node)) {
+        btn.setAttribute("aria-expanded", "false");
+        btn.setAttribute("aria-label", "Open navigation menu");
+        menu.hidden = true;
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && btn.getAttribute("aria-expanded") === "true") {
+        btn.setAttribute("aria-expanded", "false");
+        menu.hidden = true;
+        btn.focus();
+      }
+    });
+  }
+</script>

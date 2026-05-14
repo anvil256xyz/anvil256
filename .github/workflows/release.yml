@@ -1,0 +1,99 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+# Required for OIDC token used by cosign keyless signing
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu,    os: ubuntu-22.04, archive: tar.gz }
+          - { target: aarch64-unknown-linux-gnu,   os: ubuntu-22.04, archive: tar.gz }
+          - { target: x86_64-apple-darwin,         os: macos-14,     archive: tar.gz }
+          - { target: aarch64-apple-darwin,        os: macos-14,     archive: tar.gz }
+          - { target: x86_64-pc-windows-msvc,      os: windows-2022, archive: zip    }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust target
+        uses: dtolnay/rust-toolchain@stable
+        with: { targets: ${{ matrix.target }} }
+
+      - name: cargo build
+        working-directory: cli
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: package
+        shell: bash
+        run: |
+          set -eux
+          ver="${GITHUB_REF_NAME}"
+          name="anvil256-cli-${ver}-${{ matrix.target }}"
+          mkdir -p dist/${name}
+          if [ "${{ matrix.os }}" = "windows-2022" ]; then
+            cp cli/target/${{ matrix.target }}/release/anvil256-cli.exe dist/${name}/
+          else
+            cp cli/target/${{ matrix.target }}/release/anvil256-cli      dist/${name}/
+          fi
+          cp README.md LICENSE dist/${name}/
+          cp cli/.env.example dist/${name}/
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            (cd dist && 7z a ${name}.zip ${name})
+          else
+            (cd dist && tar czf ${name}.tar.gz ${name})
+          fi
+          (cd dist && sha256sum ${name}.* > ${name}.sha256)
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.target }}
+          path: dist/*
+
+  sign:
+    name: sign + draft release
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: sign each archive
+        shell: bash
+        run: |
+          set -eux
+          cd dist
+          ls -la
+          for f in *.tar.gz *.zip; do
+            [ -f "$f" ] || continue
+            cosign sign-blob --yes "$f" --output-signature "${f}.sig" --output-certificate "${f}.pem"
+          done
+          # consolidated sha256sums.txt
+          sha256sum *.tar.gz *.zip 2>/dev/null > sha256sums.txt || true
+          cat sha256sums.txt
+
+      - name: draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            dist/*

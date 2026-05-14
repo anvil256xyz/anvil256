@@ -1,0 +1,458 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import Navbar from "../components/Navbar.astro";
+
+const releases: Array<{
+  version: string;
+  date: string;
+  builds: Array<{ platform: string; url: string; sha256: string }>;
+}> = [
+  // {
+  //   version: "v0.1.0",
+  //   date:    "2026-06-XX",
+  //   builds: [
+  //     { platform: "linux-x86_64",  url: "...", sha256: "..." },
+  //     { platform: "linux-aarch64", url: "...", sha256: "..." },
+  //     { platform: "darwin-arm64",  url: "...", sha256: "..." },
+  //     { platform: "windows-x64",   url: "...", sha256: "..." },
+  //   ],
+  // },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Build From Source",
+    description: "Build Anvil256 locally from source until signed release artifacts are published.",
+  }}
+>
+
+<div class="anvil-ambient" aria-hidden="true"></div>
+<Navbar activePage="download" />
+
+<!-- ── Page header ─────────────────────────────────────────── -->
+<div class="anvil-page-header">
+  <span class="anvil-page-eyebrow">
+    <span class="anvil-title-accent">◆</span> SOURCE · local build · verifiable
+  </span>
+  <h1 class="anvil-page-title">Build From Source <span class="anvil-page-title-accent">⟨ trusted locally ⟩</span></h1>
+  <p class="anvil-page-desc">
+    Prebuilt tarballs are not available yet. Build the CLI and kernel locally
+    from source so you can inspect the code and trust your own toolchain.
+    Signed release artifacts will be listed here after publication.
+  </p>
+</div>
+
+<!-- ── Source build ────────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Local Build
+    </span>
+  </div>
+
+  <div class="anvil-verify-steps">
+    <div class="anvil-verify-step">
+      <span class="anvil-step-num">01</span>
+      <div class="anvil-step-body">
+        <p class="anvil-step-title">Build kernel locally</p>
+        <p class="anvil-step-desc">Use <code>make</code> for the default CUDA GPU kernel or <code>make cpu</code> for CPU-only mining.</p>
+      </div>
+    </div>
+    <div class="anvil-verify-step">
+      <span class="anvil-step-num">02</span>
+      <div class="anvil-step-body">
+        <p class="anvil-step-title">Build CLI locally</p>
+        <p class="anvil-step-desc">Compile the Rust orchestrator with <code>cargo build --release --locked</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="anvil-terminal">
+    <div class="anvil-terminal-bar">
+      <span class="anvil-dot anvil-dot--red"></span>
+      <span class="anvil-dot anvil-dot--yellow"></span>
+      <span class="anvil-dot anvil-dot--green"></span>
+      <span class="anvil-terminal-title">build.sh</span>
+    </div>
+    <pre class="anvil-terminal-body"><code><span class="t-comment"># Clone repository</span>
+git clone https://github.com/anvil256xyz/anvil256.git
+cd anvil256
+
+<span class="t-comment"># Build kernel: default GPU or CPU fallback</span>
+cd kernel
+make              <span class="t-comment"># NVIDIA CUDA default</span>
+<span class="t-comment"># make cpu        # CPU-only fallback</span>
+
+<span class="t-comment"># Build and run CLI</span>
+cd ../cli
+cargo build --release --locked
+cp .env.example .env
+<span class="t-comment"># set BASE_RPC_URL, PRIVATE_KEY, ANVIL256_ADDRESS</span>
+./target/release/anvil256-cli</code></pre>
+  </div>
+</section>
+
+<!-- ── Releases ─────────────────────────────────────────────── -->
+<section class="anvil-section">
+  <div class="anvil-section-header">
+    <span class="anvil-section-label">
+      <span class="anvil-title-accent">◆</span> Releases
+    </span>
+    <a
+      href="https://github.com/anvil256xyz/anvil256/releases"
+      class="anvil-section-link"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      GitHub Releases ↗
+    </a>
+  </div>
+
+  {releases.length === 0 ? (
+    <div class="anvil-empty">
+      <div class="anvil-empty-icon" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="6" width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16 12v8M12 16h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p class="anvil-empty-title">No releases yet</p>
+      <p class="anvil-empty-sub">
+        Build from source now, or watch the{" "}
+        <a class="anvil-link" href="https://github.com/anvil256xyz/anvil256/releases" target="_blank" rel="noopener noreferrer">
+          GitHub Releases page
+        </a>{" "}
+        for signed release artifacts after publication.
+      </p>
+      <div class="anvil-empty-actions">
+        <a
+          href="https://github.com/anvil256xyz/anvil256"
+          class="anvil-btn anvil-btn--secondary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          Watch on GitHub
+        </a>
+      </div>
+    </div>
+  ) : (
+    <div class="anvil-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Date</th>
+            <th>Platform</th>
+            <th>SHA-256</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          {releases.flatMap(r => r.builds.map(b => (
+            <tr>
+              <td class="anvil-td-version">{r.version}</td>
+              <td class="anvil-td-date">{r.date}</td>
+              <td>{b.platform}</td>
+              <td class="anvil-td-hash"><code>{b.sha256.slice(0, 16)}…</code></td>
+              <td>
+                <a class="anvil-dl-link" href={b.url}>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 13h12"/></svg>
+                  Download
+                </a>
+              </td>
+            </tr>
+          )))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STYLES
+════════════════════════════════════════════════════════════ -->
+<style>
+  /* ── Page header ─────────────────────────────────── */
+  :root {
+    --anvil-amber:        #b5651d;
+    --anvil-amber-mid:    #8c4d12;
+    --anvil-amber-deep:   #6d3a08;
+    --anvil-amber-low:    #f7e7c4;
+    --anvil-amber-pale:   #fcedcf;
+    --anvil-border-amber: rgba(181,101,29,0.32);
+    --anvil-border-subtle:rgba(15,13,8,0.10);
+    --anvil-border-dim:   rgba(15,13,8,0.18);
+    --anvil-surface-0:    #fbf5e4;
+    --anvil-surface-1:    #f3ead2;
+    --anvil-surface-2:    #ece1bd;
+    --anvil-paper:        #fcf8ec;
+    --anvil-text:         #0f0d08;
+    --anvil-text-muted:   #574d3b;
+    --anvil-text-faint:   #8a7e64;
+  }
+
+  .anvil-page-header {
+    padding: 2.5rem 0 1.75rem;
+    border-bottom: 1px solid var(--anvil-border-amber);
+    margin-bottom: 0;
+  }
+  .anvil-page-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    padding: 0.25rem 0.7rem;
+    background: var(--anvil-amber-low);
+    border: 1px solid var(--anvil-border-amber);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+  }
+  .anvil-page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.5rem;
+    color: var(--anvil-text);
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
+  }
+  .anvil-page-title-accent {
+    font-family: 'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--anvil-amber-deep);
+    opacity: 0.85;
+    letter-spacing: 0;
+  }
+  .anvil-page-desc {
+    font-size: 0.86rem;
+    color: var(--anvil-text-muted);
+    line-height: 1.75;
+    margin: 0;
+    max-width: 52rem;
+  }
+
+  /* ── Section helpers ─────────────────────────────── */
+  .anvil-section { margin-top: 2.5rem; }
+  .anvil-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+  }
+  .anvil-section-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--anvil-amber-deep);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .anvil-title-accent { color: var(--anvil-amber); font-size: 0.58rem; }
+  .anvil-section-link {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--anvil-amber-mid);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+  .anvil-section-link:hover { color: var(--anvil-amber-deep); }
+
+  /* ── Verify steps ────────────────────────────────── */
+  .anvil-verify-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--anvil-border-subtle);
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-verify-step {
+    background: var(--anvil-surface-0);
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    transition: background 0.12s;
+  }
+  .anvil-verify-step:hover { background: var(--anvil-surface-1); }
+  .anvil-step-num {
+    font-family: var(--anvil-font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff8e7;
+    background: var(--anvil-amber);
+    flex-shrink: 0;
+    width: 1.7rem; height: 1.7rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+  }
+  .anvil-step-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--anvil-text);
+    margin: 0 0 0.2rem;
+  }
+  .anvil-step-desc {
+    font-size: 0.75rem;
+    color: var(--anvil-text-muted);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── Empty state ─────────────────────────────────── */
+  .anvil-empty {
+    background: var(--anvil-surface-0);
+    border: 1px dashed var(--anvil-border-amber);
+    border-radius: var(--anvil-radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-empty-icon {
+    color: var(--anvil-amber);
+    margin-bottom: 0.25rem;
+  }
+  .anvil-empty-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--anvil-text);
+    margin: 0;
+  }
+  .anvil-empty-sub {
+    font-size: 0.82rem;
+    color: var(--anvil-text-muted);
+    margin: 0;
+  }
+  .anvil-empty-actions { margin-top: 0.75rem; }
+
+  /* ── Buttons ─────────────────────────────────────── */
+  .anvil-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--anvil-radius-sm);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .anvil-btn--secondary {
+    background: var(--anvil-paper);
+    border: 1px solid var(--anvil-border-dim);
+    color: var(--anvil-text);
+  }
+  .anvil-btn--secondary:hover {
+    border-color: var(--anvil-amber);
+    color: var(--anvil-amber-deep);
+    background: var(--anvil-amber-low);
+  }
+
+  /* ── Releases table ──────────────────────────────── */
+  .anvil-table-wrap {
+    border: 1px solid var(--anvil-border-subtle);
+    border-radius: var(--anvil-radius-lg);
+    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--anvil-paper);
+    box-shadow: 0 2px 10px rgba(80,55,15,0.06);
+  }
+  .anvil-td-version {
+    font-family: var(--anvil-font-mono);
+    font-size: 0.78rem;
+    color: var(--anvil-amber-deep);
+    font-weight: 600;
+  }
+  .anvil-td-date {
+    font-size: 0.8rem;
+    color: var(--anvil-text-muted);
+    white-space: nowrap;
+  }
+  .anvil-td-hash code { font-size: 0.72rem; }
+  .anvil-dl-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--anvil-amber-mid);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+  .anvil-dl-link:hover { color: var(--anvil-amber-deep); }
+
+  /* ── Misc ────────────────────────────────────────── */
+  .anvil-link {
+    color: var(--anvil-amber-mid);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+  }
+  .anvil-link:hover { color: var(--anvil-amber-deep); }
+
+  @media (max-width: 560px) {
+    .anvil-verify-steps { grid-template-columns: 1fr; }
+    .anvil-page-title { font-size: 1.5rem; }
+    .anvil-empty { padding: 2rem 1.25rem; }
+  }
+
+  /* ── Terminal — dark theme ─────────────────────────────── */
+  .anvil-terminal {
+    background: #1a1410 !important;
+    border: 1px solid rgba(181,101,29,0.40) !important;
+    border-radius: 11px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.32) !important;
+  }
+  .anvil-terminal-bar {
+    background: #120f0b !important;
+    border-bottom-color: rgba(181,101,29,0.20) !important;
+  }
+  .anvil-terminal-title { color: #c97a1f !important; }
+  .anvil-terminal-body {
+    background: #1a1410 !important;
+    color: #e8d8b8 !important;
+  }
+  .anvil-terminal-body,
+  .anvil-terminal-body code,
+  .anvil-terminal-body * {
+    color: #e8d8b8 !important;
+    background: transparent !important;
+  }
+  .anvil-terminal-body .t-comment { color: #7a6a50 !important; }
+
+  /* ── Inline code in prose ──────────────────────────────── */
+  .anvil-page-desc code,
+  .anvil-step-desc code,
+  .anvil-empty-sub code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+    font-size: 0.82em !important;
+    background: var(--anvil-amber-pale) !important;
+    color: var(--anvil-amber-deep) !important;
+    border: 1px solid var(--anvil-border-amber) !important;
+    border-radius: 4px !important;
+    padding: 0.06em 0.38em !important;
+  }
+
+</style>
+
+</StarlightPage>
