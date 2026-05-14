@@ -17,9 +17,9 @@ export default defineConfig({
     starlight({
       title: "Anvil256",
       description:
-        "Fair-launch 21M-cap ERC-20 mined entirely via keccak-256 PoW. No premine, no presale, no backend.",
+        "Fair-launch 21M-cap ERC-20 with Keccak-Cascade PoW, protocol-owned liquidity, no dev premine, no presale, and no backend.",
       logo: {
-        src: "./public/logo.png",
+        src: "./src/assets/logo.svg",
         replacesTitle: false,
       },
       head: [
