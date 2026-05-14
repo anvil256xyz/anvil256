@@ -157,6 +157,24 @@ import Navbar from "../components/Navbar.astro";
 
     <div class="anvil-stat-card anvil-stat-card--wide">
       <p class="anvil-stat-label">
+        <span class="anvil-stat-sym">α</span> Anvil256 Contract
+        <em class="anvil-label-note">Base mainnet</em>
+      </p>
+      <p id="contract-address" class="anvil-stat-mono anvil-stat-mono--addr">—</p>
+      <p class="anvil-stat-sub">Live reads use this immutable deployment address.</p>
+    </div>
+
+    <div class="anvil-stat-card anvil-stat-card--wide">
+      <p class="anvil-stat-label">
+        <span class="anvil-stat-sym">λ</span> Official ANVL/WETH Pool
+        <em class="anvil-label-note">Uniswap v3</em>
+      </p>
+      <p id="liquidity-pool" class="anvil-stat-mono anvil-stat-mono--addr">—</p>
+      <p id="liquidity-state" class="anvil-stat-sub">Genesis full-range LP seeded at deployment.</p>
+    </div>
+
+    <div class="anvil-stat-card anvil-stat-card--wide">
+      <p class="anvil-stat-label">
         <span class="anvil-stat-sym">η</span> Fee Recipient
         <em class="anvil-label-note">immutable</em>
       </p>
@@ -219,7 +237,7 @@ async function refresh() {
     const [
       epoch, difficulty, reward, supply, feeWei,
       recipient, integ, period,
-      epochEntropy,
+      epochEntropy, liquidityPool, liquidityLive,
     ] = await Promise.all([
       client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "currentEpoch" }),
       client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "currentDifficulty" }),
@@ -230,6 +248,8 @@ async function refresh() {
       client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "integralErrorWad" }),
       client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "periodIndex" }),
       client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "epochEntropy" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "liquidityPool" }),
+      client.readContract({ address: ANVIL256_ADDRESS, abi: anvil256Abi, functionName: "liquidityLive" }),
     ]);
 
     const epochNum = Number(epoch as bigint);
@@ -260,6 +280,11 @@ async function refresh() {
     }
 
     el("period").textContent = `#${Number(period as bigint).toLocaleString()}`;
+    el("contract-address").textContent = ANVIL256_ADDRESS;
+    el("liquidity-pool").textContent = String(liquidityPool);
+    el("liquidity-state").textContent = (liquidityLive as boolean)
+      ? "Main protocol-owned liquidity deployment is live."
+      : "Genesis full-range LP is live; main POL deployment unlocks at the supply trigger.";
     el("recipient").textContent = String(recipient);
 
     // NCT — uniqueCount not yet exposed as external view on the contract.
