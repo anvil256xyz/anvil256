@@ -5,10 +5,14 @@
 // Visitors who want to scan large ranges of `Mined` events should override
 
 
-import { createPublicClient, http, type Address } from "viem";
+import { createPublicClient, fallback, http, type Address } from "viem";
 import { base } from "viem/chains";
 
 const DEFAULT_RPC = "https://mainnet.base.org";
+const FALLBACK_RPCS = [
+  "https://base-rpc.publicnode.com",
+  "https://base.llamarpc.com",
+];
 
 const userRpc =
   typeof window !== "undefined"
@@ -17,13 +21,20 @@ const userRpc =
 
 export const client = createPublicClient({
   chain: base,
-  transport: http(userRpc),
+  transport: fallback(
+    [userRpc, ...FALLBACK_RPCS]
+      .filter((rpc, i, all) => all.indexOf(rpc) === i)
+      .map((rpc) => http(rpc)),
+    { retryCount: 1 }
+  ),
 });
 
-/** Anvil256 contract address — set in DEPLOYMENT.md at launch. */
+export const ACTIVE_RPC = userRpc;
+
+/** Anvil256 contract address on Base mainnet. */
 export const ANVIL256_ADDRESS: Address =
   (import.meta.env.PUBLIC_ANVIL256_ADDRESS as Address) ??
-  ("0x0000000000000000000000000000000000000000" as Address);
+  ("0x8C3199578834914AC08Eb628475D4Cfd26e011c2" as Address);
 
 /** Minimum ABI used by the live-stats page. */
 export const anvil256Abi = [

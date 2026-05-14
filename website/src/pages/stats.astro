@@ -202,13 +202,15 @@ import Navbar from "../components/Navbar.astro";
 <p class="anvil-refresh-note">↻ Auto-refreshes every 15 s via viem from your configured RPC.</p>
 
 <script>
-import { client, anvil256Abi, ANVIL256_ADDRESS } from "@/lib/viem-client";
+import { client, anvil256Abi, ANVIL256_ADDRESS, ACTIVE_RPC } from "@/lib/viem-client";
 import { formatUnits } from "viem";
 
 const MAX_SUPPLY = 21_000_000;
 const WINDOW_SIZE = 256;
 
 function el(id: string) { return document.getElementById(id) as HTMLElement; }
+
+el("contract-address").textContent = ANVIL256_ADDRESS;
 
 function setStatus(state: "ok" | "error" | "loading", msg: string) {
   const dot  = el("status-dot");
@@ -233,7 +235,7 @@ function log2Floor(n: bigint): number {
 
 async function refresh() {
   try {
-    setStatus("loading", "Fetching…");
+    setStatus("loading", `Fetching via ${new URL(ACTIVE_RPC).hostname}…`);
     const [
       epoch, difficulty, reward, supply, feeWei,
       recipient, integ, period,
@@ -311,7 +313,8 @@ async function refresh() {
     setStatus("ok", "Live");
     el("last-updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
   } catch (e: any) {
-    setStatus("error", `Error: ${e?.shortMessage ?? e?.message ?? "unknown"}`);
+    const msg = e?.shortMessage ?? e?.details ?? e?.message ?? "unknown";
+    setStatus("error", `RPC error: ${msg}`);
     console.error("stats refresh failed", e);
   }
 }
