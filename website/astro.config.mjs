@@ -28,7 +28,7 @@ export default defineConfig({
           attrs: {
             rel: "icon",
             type: "image/png",
-            href: "/logo.png",
+            href: "/logo.svg",
           },
         },
       ],
