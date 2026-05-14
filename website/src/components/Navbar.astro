@@ -18,7 +18,7 @@ const links = [
     <!-- Logo -->
     <a href="/" class="anv-logo" aria-label="Anvil256 home">
       <span class="anv-logo-icon" aria-hidden="true">
-        <img src="/logo.svg" alt="" class="anv-logo-img" width="28" height="28" />
+        <img src="/logo.png" alt="" class="anv-logo-img" width="28" height="28" />
       </span>
       <span class="anv-logo-wordmark">
         <span class="anv-logo-anvil">Anvil</span><span class="anv-logo-num">256</span>
@@ -144,10 +144,11 @@ const links = [
     display: flex;
     align-items: center;
     height: 58px;
-    padding: 0 2rem;
+    padding: 0 clamp(0.75rem, 2vw, 1.5rem);
     max-width: 82rem;
     margin: 0 auto;
     gap: 0.5rem;
+    min-width: 0;
   }
 
   /* ── Logo ─────────────────────────────────────────────── */
@@ -156,7 +157,7 @@ const links = [
     align-items: center;
     gap: 0.55rem;
     text-decoration: none;
-    margin-right: 2rem;
+    margin-right: clamp(0.75rem, 2vw, 1.5rem);
     flex-shrink: 0;
     transition: opacity 0.2s;
   }
@@ -197,6 +198,7 @@ const links = [
     align-items: center;
     gap: 0.15rem;
     flex: 1;
+    min-width: 0;
   }
 
   .anv-link {
@@ -239,6 +241,7 @@ const links = [
     align-items: center;
     gap: 0.5rem;
     margin-left: auto;
+    flex-shrink: 0;
   }
 
   /* GitHub */
@@ -412,9 +415,11 @@ const links = [
     .anv-gh-label { display: none; }
     .anv-gh { padding: 0.4rem 0.6rem; }
   }
-  @media (max-width: 740px) {
+  @media (max-width: 1080px) {
+    .anv-cta { display: none; }
+  }
+  @media (max-width: 860px) {
     .anv-links { display: none; }
-    .anv-cta   { display: none; }
     .anv-hamburger { display: flex; }
     .anv-nav-inner { padding: 0 1.25rem; }
   }
