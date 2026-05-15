@@ -1,4 +1,10 @@
 #pragma once
+// =============================================================================
+// host_common.hpp — shared protocol helpers for Anvil256 GPU/CPU miners
+//
+// Provides: Job struct, SharedState, JSON emitters, hex parsing, env helpers,
+// stdin reader. Included by both miner.cu (CUDA) and miner_cpu.cpp (CPU).
+// =============================================================================
 
 #include "protocol.h"
 
@@ -16,11 +22,14 @@
 
 namespace anvil256 {
 
-// Host-side representation of one mining job. The byte order is chosen to
-// match the hot loops directly:
-// - inner/entropy are little-endian u64 lanes absorbed by Keccak.
-// - difficulty is big-endian u64 words for uint256 comparison.
-// - base_nonce is randomized per job; workers add their own disjoint stride.
+// =============================================================================
+// Job + shared state
+// =============================================================================
+
+// Host-side representation of one mining job.
+//   inner / entropy : little-endian u64 lanes for direct Keccak absorption.
+//   difficulty      : big-endian  u64 words  for uint256 comparisons.
+//   base_nonce      : randomised per job; workers add their own disjoint stride.
 struct Job {
     std::uint64_t id            = 0;
     std::uint64_t inner[4]      = {};
@@ -39,6 +48,10 @@ struct SharedState {
     std::atomic<bool>       exit_requested{false};
 };
 
+// =============================================================================
+// I/O helpers
+// =============================================================================
+
 inline std::mutex g_io_mu;
 
 inline std::string trim(const std::string& s) {
@@ -50,8 +63,8 @@ inline std::string trim(const std::string& s) {
 
 inline std::string json_escape(const std::string& s) {
     std::string out;
-    out.reserve(s.size() + 2);
-    for (char c : s) {
+    out.reserve(s.size() + 4);
+    for (unsigned char c : s) {
         switch (c) {
             case '"':  out += "\\\""; break;
             case '\\': out += "\\\\"; break;
@@ -59,12 +72,12 @@ inline std::string json_escape(const std::string& s) {
             case '\r': out += "\\r";  break;
             case '\t': out += "\\t";  break;
             default:
-                if (static_cast<unsigned char>(c) < 0x20) {
+                if (c < 0x20) {
                     char buf[8];
-                    std::snprintf(buf, sizeof(buf), "\\u%04x", c & 0xff);
+                    std::snprintf(buf, sizeof(buf), "\\u%04x", c);
                     out += buf;
                 } else {
-                    out += c;
+                    out += static_cast<char>(c);
                 }
         }
     }
@@ -83,6 +96,10 @@ inline void emit_error(const std::string& msg) {
     emit(os.str());
 }
 
+// =============================================================================
+// Hex / byte helpers
+// =============================================================================
+
 inline int hex_nibble(char c) {
     if (c >= '0' && c <= '9') return c - '0';
     if (c >= 'a' && c <= 'f') return c - 'a' + 10;
@@ -90,13 +107,11 @@ inline int hex_nibble(char c) {
     return -1;
 }
 
+// Decode exactly 32 bytes from a 64-char hex string (0x prefix optional).
 inline bool parse_hex32(const std::string& s, std::uint8_t out[32]) {
     const char* p = s.c_str();
     std::size_t n = s.size();
-    if (n >= 2 && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
-        p += 2;
-        n -= 2;
-    }
+    if (n >= 2 && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) { p += 2; n -= 2; }
     if (n != 64) return false;
     for (std::size_t i = 0; i < 32; ++i) {
         int hi = hex_nibble(p[i * 2]);
@@ -119,16 +134,15 @@ inline std::uint64_t load_be64(const std::uint8_t* p) {
     return v;
 }
 
+// Encode 4× BE u64 words as "0x<64-hex-char>" string.
 inline std::string hash_to_hex(const std::uint64_t hash[4]) {
     char buf[2 + 64 + 1];
     char* p = buf;
-    *p++ = '0';
-    *p++ = 'x';
+    *p++ = '0'; *p++ = 'x';
     for (int i = 0; i < 4; ++i) {
         std::uint64_t w = hash[i];
         for (int b = 7; b >= 0; --b) {
-            std::uint8_t byte = static_cast<std::uint8_t>(w >> (b * 8));
-            std::snprintf(p, 3, "%02x", byte);
+            std::snprintf(p, 3, "%02x", static_cast<std::uint8_t>(w >> (b * 8)));
             p += 2;
         }
     }
@@ -142,13 +156,16 @@ inline std::string u64_to_dec(std::uint64_t v) {
     return std::string(buf);
 }
 
+// =============================================================================
+// Env helpers
+// =============================================================================
+
 inline std::uint64_t env_u64(const char* name, std::uint64_t fallback) {
     const char* v = std::getenv(name);
     if (!v || !*v) return fallback;
     char* end = nullptr;
     unsigned long long r = std::strtoull(v, &end, 0);
-    if (end == v) return fallback;
-    return static_cast<std::uint64_t>(r);
+    return (end == v) ? fallback : static_cast<std::uint64_t>(r);
 }
 
 inline double env_f64(const char* name, double fallback) {
@@ -156,33 +173,46 @@ inline double env_f64(const char* name, double fallback) {
     if (!v || !*v) return fallback;
     char* end = nullptr;
     double r = std::strtod(v, &end);
-    if (end == v) return fallback;
-    return r;
+    return (end == v) ? fallback : r;
 }
+
+// =============================================================================
+// Misc helpers
+// =============================================================================
 
 inline std::uint64_t now_ms() {
     using namespace std::chrono;
-    return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+    return static_cast<std::uint64_t>(
+        duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
 }
 
 inline void fill_random_base_nonce(Job& job) {
     std::random_device rd;
-    job.base_nonce = (static_cast<std::uint64_t>(rd()) << 32) ^ static_cast<std::uint64_t>(rd());
+    job.base_nonce = (static_cast<std::uint64_t>(rd()) << 32)
+                   ^ static_cast<std::uint64_t>(rd());
 }
 
+// =============================================================================
+// JOB line parser
+// =============================================================================
+
+// Parses: "JOB <inner_hex32> <entropy_hex32> <difficulty_hex32> <job_id_dec>"
+// inner / entropy → little-endian u64 lanes.
+// difficulty      → big-endian  u64 words.
 inline bool parse_job_line(const std::string& line, Job& job, std::string& err) {
     std::istringstream is(line);
     std::string cmd, inner_s, eps_s, diff_s, id_s;
     is >> cmd >> inner_s >> eps_s >> diff_s >> id_s;
+
     if (cmd != "JOB" || inner_s.empty() || eps_s.empty() || diff_s.empty() || id_s.empty()) {
         err = "expected: JOB <inner_hex32> <entropy_hex32> <difficulty_hex32> <job_id>";
         return false;
     }
 
     std::uint8_t ib[32], eb[32], db[32];
-    if (!parse_hex32(inner_s, ib)) { err = "inner must be 32-byte hex"; return false; }
-    if (!parse_hex32(eps_s, eb)) { err = "entropy must be 32-byte hex"; return false; }
-    if (!parse_hex32(diff_s, db)) { err = "difficulty must be 32-byte hex"; return false; }
+    if (!parse_hex32(inner_s, ib)) { err = "inner must be 32-byte hex";      return false; }
+    if (!parse_hex32(eps_s,   eb)) { err = "entropy must be 32-byte hex";    return false; }
+    if (!parse_hex32(diff_s,  db)) { err = "difficulty must be 32-byte hex"; return false; }
 
     char* end = nullptr;
     unsigned long long parsed_id = std::strtoull(id_s.c_str(), &end, 10);
@@ -191,8 +221,8 @@ inline bool parse_job_line(const std::string& line, Job& job, std::string& err) 
         return false;
     }
 
-    for (int i = 0; i < 4; ++i) job.inner[i] = load_le64(ib + i * 8);
-    for (int i = 0; i < 4; ++i) job.entropy[i] = load_le64(eb + i * 8);
+    for (int i = 0; i < 4; ++i) job.inner[i]      = load_le64(ib + i * 8);
+    for (int i = 0; i < 4; ++i) job.entropy[i]    = load_le64(eb + i * 8);
     for (int i = 0; i < 4; ++i) job.difficulty[i] = load_be64(db + i * 8);
     job.id = static_cast<std::uint64_t>(parsed_id);
     fill_random_base_nonce(job);
@@ -200,43 +230,48 @@ inline bool parse_job_line(const std::string& line, Job& job, std::string& err) 
     return true;
 }
 
+// =============================================================================
+// Stdin reader (runs on its own thread; feeds SharedState)
+// =============================================================================
+
 inline void stdin_reader(SharedState* st) {
     std::string line;
     while (std::getline(std::cin, line)) {
         if (st->exit_requested.load()) break;
         line = trim(line);
         if (line.empty()) continue;
+
         if (line.rfind("JOB", 0) == 0) {
             Job j;
             std::string err;
-            if (!parse_job_line(line, j, err)) {
-                emit_error(err);
-                continue;
-            }
+            if (!parse_job_line(line, j, err)) { emit_error(err); continue; }
             {
                 std::lock_guard<std::mutex> lk(st->mu);
                 st->job = j;
-                if (j.id >= st->next_job_id && j.id != UINT64_MAX) {
+                if (j.id >= st->next_job_id && j.id != UINT64_MAX)
                     st->next_job_id = j.id + 1;
-                }
                 st->found_in_job.store(false, std::memory_order_release);
             }
             st->cv.notify_all();
+
         } else if (line == "STOP") {
             {
                 std::lock_guard<std::mutex> lk(st->mu);
                 st->job.active = false;
-                st->job.id = st->next_job_id++;
+                st->job.id     = st->next_job_id++;
             }
             st->cv.notify_all();
+
         } else if (line == "EXIT" || line == "QUIT") {
             st->exit_requested.store(true, std::memory_order_release);
             st->cv.notify_all();
             return;
+
         } else {
             emit_error("unknown command (expected JOB|STOP|EXIT)");
         }
     }
+    // EOF / pipe-close → treat as EXIT
     st->exit_requested.store(true, std::memory_order_release);
     st->cv.notify_all();
 }
