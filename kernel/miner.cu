@@ -119,10 +119,11 @@
 
 #include <cuda_runtime.h>
 
+#include "host_common.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <cinttypes>
 #include <condition_variable>
 #include <csignal>
 #include <cstdint>
@@ -131,7 +132,6 @@
 #include <cstring>
 #include <iostream>
 #include <mutex>
-#include <random>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -389,124 +389,6 @@ constexpr std::uint64_t DEVICE_NONCE_WINDOW = 1ULL << 56;
 constexpr double        DEFAULT_TGT_MS  = 250.0;
 constexpr double        EMA_ALPHA       = 0.30;
 
-std::mutex g_io_mu;
-
-inline std::string trim(const std::string& s) {
-    auto b = s.find_first_not_of(" \t\r\n");
-    if (b == std::string::npos) return {};
-    auto e = s.find_last_not_of(" \t\r\n");
-    return s.substr(b, e - b + 1);
-}
-
-std::string json_escape(const std::string& s) {
-    std::string out;
-    out.reserve(s.size() + 2);
-    for (char c : s) {
-        switch (c) {
-            case '"':  out += "\\\""; break;
-            case '\\': out += "\\\\"; break;
-            case '\n': out += "\\n";  break;
-            case '\r': out += "\\r";  break;
-            case '\t': out += "\\t";  break;
-            default:
-                if (static_cast<unsigned char>(c) < 0x20) {
-                    char buf[8];
-                    std::snprintf(buf, sizeof(buf), "\\u%04x", c & 0xff);
-                    out += buf;
-                } else {
-                    out += c;
-                }
-        }
-    }
-    return out;
-}
-
-void emit(const std::string& line) {
-    std::lock_guard<std::mutex> lk(g_io_mu);
-    std::cout << line << '\n';
-    std::cout.flush();
-}
-
-void emit_error(const std::string& msg) {
-    std::ostringstream os;
-    os << "{\"type\":\"error\",\"message\":\"" << json_escape(msg) << "\"}";
-    emit(os.str());
-}
-
-int hex_nibble(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return -1;
-}
-
-bool parse_hex32(const std::string& s, std::uint8_t out[32]) {
-    const char* p = s.c_str();
-    std::size_t n = s.size();
-    if (n >= 2 && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) { p += 2; n -= 2; }
-    if (n != 64) return false;
-    for (std::size_t i = 0; i < 32; ++i) {
-        int hi = hex_nibble(p[i * 2]);
-        int lo = hex_nibble(p[i * 2 + 1]);
-        if (hi < 0 || lo < 0) return false;
-        out[i] = static_cast<std::uint8_t>((hi << 4) | lo);
-    }
-    return true;
-}
-
-std::uint64_t load_le64(const std::uint8_t* p) {
-    std::uint64_t v = 0;
-    for (int i = 0; i < 8; ++i) v |= static_cast<std::uint64_t>(p[i]) << (i * 8);
-    return v;
-}
-
-std::uint64_t load_be64(const std::uint8_t* p) {
-    std::uint64_t v = 0;
-    for (int i = 0; i < 8; ++i) v = (v << 8) | static_cast<std::uint64_t>(p[i]);
-    return v;
-}
-
-std::string hash_to_hex(const std::uint64_t hash[4]) {
-    char buf[2 + 64 + 1];
-    char* p = buf;
-    *p++ = '0';
-    *p++ = 'x';
-    for (int i = 0; i < 4; ++i) {
-        std::uint64_t w = hash[i];
-        for (int b = 7; b >= 0; --b) {
-            std::uint8_t byte = static_cast<std::uint8_t>(w >> (b * 8));
-            std::snprintf(p, 3, "%02x", byte);
-            p += 2;
-        }
-    }
-    *p = '\0';
-    return std::string(buf);
-}
-
-std::string u64_to_dec(std::uint64_t v) {
-    char buf[32];
-    std::snprintf(buf, sizeof(buf), "%" PRIu64, v);
-    return std::string(buf);
-}
-
-std::uint64_t env_u64(const char* name, std::uint64_t fallback) {
-    const char* v = std::getenv(name);
-    if (!v || !*v) return fallback;
-    char* end = nullptr;
-    unsigned long long r = std::strtoull(v, &end, 0);
-    if (end == v) return fallback;
-    return static_cast<std::uint64_t>(r);
-}
-
-double env_f64(const char* name, double fallback) {
-    const char* v = std::getenv(name);
-    if (!v || !*v) return fallback;
-    char* end = nullptr;
-    double r = std::strtod(v, &end);
-    if (end == v) return fallback;
-    return r;
-}
-
 std::vector<std::size_t> env_csv_indices(const char* name) {
     std::vector<std::size_t> out;
     const char* v = std::getenv(name);
@@ -515,18 +397,13 @@ std::vector<std::size_t> env_csv_indices(const char* name) {
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, ',')) {
-        item = trim(item);
+        item = anvil256::trim(item);
         if (item.empty()) continue;
         char* end = nullptr;
         unsigned long idx = std::strtoul(item.c_str(), &end, 10);
         if (end != item.c_str()) out.push_back(static_cast<std::size_t>(idx));
     }
     return out;
-}
-
-std::uint64_t now_ms() {
-    using namespace std::chrono;
-    return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
 }
 
 bool cuda_check(cudaError_t e, const char* where, std::string& msg) {
@@ -541,23 +418,8 @@ bool cuda_check(cudaError_t e, const char* where, std::string& msg) {
 // Job & shared state
 // =============================================================================
 
-struct Job {
-    std::uint64_t id            = 0;
-    std::uint64_t inner[4]      = {};   // LE u64 lanes of ι
-    std::uint64_t entropy[4]    = {};   // LE u64 lanes of ε[n]
-    std::uint64_t difficulty[4] = {};   // BE u64 words ([0]=MSB)
-    std::uint64_t base_nonce    = 0;
-    bool          active        = false;
-};
-
-struct SharedState {
-    std::mutex              mu;
-    std::condition_variable cv;
-    Job                     job;
-    std::uint64_t           next_job_id = 1;
-    std::atomic<bool>       found_in_job{false};
-    std::atomic<bool>       exit_requested{false};
-};
+using anvil256::Job;
+using anvil256::SharedState;
 
 SharedState* g_state_ptr = nullptr;
 
@@ -601,7 +463,7 @@ bool init_device(DeviceCtx& d, std::string& err) {
     d.max_threads = prop.maxThreadsPerBlock;
 
     // ---- env-driven tuning, clamped to safe ranges -------------------------
-    std::uint32_t blk = (std::uint32_t)env_u64("MINER_BLOCK", DEFAULT_BLOCK);
+    std::uint32_t blk = (std::uint32_t)anvil256::env_u64("MINER_BLOCK", DEFAULT_BLOCK);
     if (blk > MAX_BLOCK) blk = MAX_BLOCK;
     if ((int)blk > d.max_threads) blk = (std::uint32_t)d.max_threads;
     if (blk == 0) blk = DEFAULT_BLOCK;
@@ -609,12 +471,12 @@ bool init_device(DeviceCtx& d, std::string& err) {
     if (blk < 32) blk = 32;
     d.block_size = blk;
 
-    std::uint32_t npt = (std::uint32_t)env_u64("MINER_NPT", DEFAULT_NPT);
+    std::uint32_t npt = (std::uint32_t)anvil256::env_u64("MINER_NPT", DEFAULT_NPT);
     if (npt < MIN_NPT) npt = MIN_NPT;
     if (npt > MAX_NPT) npt = MAX_NPT;
     d.npt = npt;
 
-    std::uint64_t env_grid = env_u64("MINER_GRID", 0);
+    std::uint64_t env_grid = anvil256::env_u64("MINER_GRID", 0);
     if (env_grid == 0) {
         // Auto: SM_count * 64 blocks. With block=128 this keeps every SM
         // oversubscribed by at least 4 ready waves after the first launch.
@@ -624,7 +486,7 @@ bool init_device(DeviceCtx& d, std::string& err) {
         d.grid_size = (std::uint32_t)env_grid;
     }
 
-    d.target_ms = env_f64("MINER_TARGET_BATCH_MS", DEFAULT_TGT_MS);
+    d.target_ms = anvil256::env_f64("MINER_TARGET_BATCH_MS", DEFAULT_TGT_MS);
     if (d.target_ms < 25.0)   d.target_ms = 25.0;
     if (d.target_ms > 2000.0) d.target_ms = 2000.0;
 
@@ -662,7 +524,7 @@ void device_worker(DeviceCtx d, SharedState* st) {
     std::uint64_t base_nonce     = 0;
     bool          have_job       = false;
 
-    const std::uint64_t prog_period = env_u64("MINER_PROGRESS_MS", DEFAULT_PROG_MS);
+    const std::uint64_t prog_period = anvil256::env_u64("MINER_PROGRESS_MS", DEFAULT_PROG_MS);
 
     while (!st->exit_requested.load(std::memory_order_acquire)) {
         std::uint64_t inner[4] = {};
@@ -686,11 +548,10 @@ void device_worker(DeviceCtx d, SharedState* st) {
             base_nonce     = j.base_nonce + d.device_stride;
             d.window_used  = 0;
             have_job       = true;
-            job_started_ms = now_ms();
+            job_started_ms = anvil256::now_ms();
             job_hashes     = 0;
             hashrate_ema   = 0.0;
             last_emit_ms   = job_started_ms;
-            st->found_in_job.store(false, std::memory_order_release);
         }
 
         // ---- push inner + entropy + difficulty into constant memory --------
@@ -699,17 +560,17 @@ void device_worker(DeviceCtx d, SharedState* st) {
             if (!cuda_check(cudaMemcpyToSymbolAsync(d_INNER, inner, sizeof(inner), 0,
                                                    cudaMemcpyHostToDevice, d.stream),
                             "cudaMemcpyToSymbolAsync(d_INNER)", err)) {
-                emit_error(err); have_job = false; continue;
+                anvil256::emit_error(err); have_job = false; continue;
             }
             if (!cuda_check(cudaMemcpyToSymbolAsync(d_EPS, eps, sizeof(eps), 0,
                                                    cudaMemcpyHostToDevice, d.stream),
                             "cudaMemcpyToSymbolAsync(d_EPS)", err)) {
-                emit_error(err); have_job = false; continue;
+                anvil256::emit_error(err); have_job = false; continue;
             }
             if (!cuda_check(cudaMemcpyToSymbolAsync(d_DIFF, diff, sizeof(diff), 0,
                                                    cudaMemcpyHostToDevice, d.stream),
                             "cudaMemcpyToSymbolAsync(d_DIFF)", err)) {
-                emit_error(err); have_job = false; continue;
+                anvil256::emit_error(err); have_job = false; continue;
             }
         }
 
@@ -724,23 +585,23 @@ void device_worker(DeviceCtx d, SharedState* st) {
             std::string err;
 
             if (!cuda_check(cudaMemsetAsync(d.d_result, 0, sizeof(Result), d.stream),
-                            "cudaMemsetAsync(d_result)", err)) { emit_error(err); have_job = false; break; }
+                            "cudaMemsetAsync(d_result)", err)) { anvil256::emit_error(err); have_job = false; break; }
 
-            const std::uint64_t batch_started = now_ms();
+            const std::uint64_t batch_started = anvil256::now_ms();
 
             mine_kernel<<<d.grid_size, d.block_size, 0, d.stream>>>(
                 base_nonce, d.npt, d.d_result);
 
-            if (!cuda_check(cudaGetLastError(), "kernel launch", err)) { emit_error(err); have_job = false; break; }
+            if (!cuda_check(cudaGetLastError(), "kernel launch", err)) { anvil256::emit_error(err); have_job = false; break; }
 
             if (!cuda_check(cudaMemcpyAsync(d.h_result, d.d_result, sizeof(Result),
                                             cudaMemcpyDeviceToHost, d.stream),
-                            "cudaMemcpyAsync(d_result)", err)) { emit_error(err); have_job = false; break; }
+                            "cudaMemcpyAsync(d_result)", err)) { anvil256::emit_error(err); have_job = false; break; }
 
             if (!cuda_check(cudaStreamSynchronize(d.stream),
-                            "cudaStreamSynchronize", err)) { emit_error(err); have_job = false; break; }
+                            "cudaStreamSynchronize", err)) { anvil256::emit_error(err); have_job = false; break; }
 
-            const std::uint64_t now      = now_ms();
+            const std::uint64_t now      = anvil256::now_ms();
             std::uint64_t       batch_ms = now - batch_started;
             if (batch_ms == 0) batch_ms = 1;
 
@@ -751,7 +612,7 @@ void device_worker(DeviceCtx d, SharedState* st) {
                 std::ostringstream os;
                 os << "device nonce window exhausted for " << d.name
                    << "; restart job to avoid cross-device nonce overlap";
-                emit_error(os.str());
+                anvil256::emit_error(os.str());
                 have_job = false;
                 break;
             }
@@ -796,14 +657,14 @@ void device_worker(DeviceCtx d, SharedState* st) {
                 if (!st->found_in_job.exchange(true, std::memory_order_acq_rel)) {
                     std::ostringstream os;
                     os << "{\"type\":\"found\",\"job\":" << local_job_id
-                       << ",\"device\":\"" << json_escape(d.name) << "\""
-                       << ",\"nonce\":\""  << u64_to_dec(d.h_result->nonce) << "\""
-                       << ",\"hash\":\""   << hash_to_hex(d.h_result->hash) << "\""
+                       << ",\"device\":\"" << anvil256::json_escape(d.name) << "\""
+                       << ",\"nonce\":\""  << anvil256::u64_to_dec(d.h_result->nonce) << "\""
+                       << ",\"hash\":\""   << anvil256::hash_to_hex(d.h_result->hash) << "\""
                        << ",\"hashes\":"   << job_hashes
                        << ",\"hashrate\":" << (std::uint64_t)hashrate_ema
                        << ",\"elapsed_ms\":" << (now - job_started_ms)
                        << "}";
-                    emit(os.str());
+                    anvil256::emit(os.str());
                 }
                 have_job = false;
                 break;
@@ -813,85 +674,17 @@ void device_worker(DeviceCtx d, SharedState* st) {
                 last_emit_ms = now;
                 std::ostringstream os;
                 os << "{\"type\":\"progress\",\"job\":" << local_job_id
-                   << ",\"device\":\"" << json_escape(d.name) << "\""
+                   << ",\"device\":\"" << anvil256::json_escape(d.name) << "\""
                    << ",\"hashes\":"   << job_hashes
                    << ",\"hashrate\":" << (std::uint64_t)hashrate_ema
                    << ",\"elapsed_ms\":" << (now - job_started_ms)
                    << "}";
-                emit(os.str());
+                anvil256::emit(os.str());
             }
         }
     }
 
     release_device(d);
-}
-
-// =============================================================================
-// Stdin reader
-// =============================================================================
-
-// JOB <inner_hex32> <entropy_hex32> <difficulty_hex32> <job_id>
-bool parse_job_line(const std::string& line, Job& job, std::string& err) {
-    std::istringstream is(line);
-    std::string cmd, inner_s, eps_s, diff_s, id_s;
-    is >> cmd >> inner_s >> eps_s >> diff_s >> id_s;
-    if (cmd != "JOB" || inner_s.empty() || eps_s.empty() || diff_s.empty() || id_s.empty()) {
-        err = "expected: JOB <inner_hex32> <entropy_hex32> <difficulty_hex32> <job_id>";
-        return false;
-    }
-    std::uint8_t ib[32], eb[32], db[32];
-    if (!parse_hex32(inner_s, ib)) { err = "inner must be 32-byte hex";    return false; }
-    if (!parse_hex32(eps_s,   eb)) { err = "entropy must be 32-byte hex";  return false; }
-    if (!parse_hex32(diff_s,  db)) { err = "difficulty must be 32-byte hex"; return false; }
-    char* end = nullptr;
-    unsigned long long parsed_id = std::strtoull(id_s.c_str(), &end, 10);
-    if (end == id_s.c_str() || *end != '\0' || parsed_id == 0ULL) {
-        err = "job_id must be a positive decimal u64";
-        return false;
-    }
-    for (int i = 0; i < 4; ++i) job.inner[i]      = load_le64(ib + i * 8);
-    for (int i = 0; i < 4; ++i) job.entropy[i]    = load_le64(eb + i * 8);
-    for (int i = 0; i < 4; ++i) job.difficulty[i] = load_be64(db + i * 8);
-    job.id = static_cast<std::uint64_t>(parsed_id);
-    std::random_device rd;
-    job.base_nonce = ((std::uint64_t)rd() << 32) ^ (std::uint64_t)rd();
-    job.active = true;
-    return true;
-}
-
-void stdin_reader(SharedState* st) {
-    std::string line;
-    while (std::getline(std::cin, line)) {
-        if (st->exit_requested.load()) break;
-        line = trim(line);
-        if (line.empty()) continue;
-        if (line.rfind("JOB", 0) == 0) {
-            Job j; std::string err;
-            if (!parse_job_line(line, j, err)) { emit_error(err); continue; }
-            {
-                std::lock_guard<std::mutex> lk(st->mu);
-                st->job = j;
-                if (j.id >= st->next_job_id && j.id != UINT64_MAX) st->next_job_id = j.id + 1;
-                st->found_in_job.store(false, std::memory_order_release);
-            }
-            st->cv.notify_all();
-        } else if (line == "STOP") {
-            {
-                std::lock_guard<std::mutex> lk(st->mu);
-                st->job.active = false;
-                st->job.id = st->next_job_id++;
-            }
-            st->cv.notify_all();
-        } else if (line == "EXIT" || line == "QUIT") {
-            st->exit_requested.store(true, std::memory_order_release);
-            st->cv.notify_all();
-            return;
-        } else {
-            emit_error("unknown command (expected JOB|STOP|EXIT)");
-        }
-    }
-    st->exit_requested.store(true, std::memory_order_release);
-    st->cv.notify_all();
 }
 
 // =============================================================================
@@ -936,10 +729,10 @@ int run_common(std::vector<DeviceCtx>& devices, SharedState& st, bool interactiv
         devices[i].index         = i;
         devices[i].device_stride = (std::uint64_t)i << 56;
         std::string err;
-        if (!init_device(devices[i], err)) { emit_error(err); continue; }
+        if (!init_device(devices[i], err)) { anvil256::emit_error(err); continue; }
         initialized.push_back(std::move(devices[i]));
     }
-    if (initialized.empty()) { emit_error("no CUDA devices initialized"); return 1; }
+    if (initialized.empty()) { anvil256::emit_error("no CUDA devices initialized"); return 1; }
 
     // Ready event -- field names match main.rs's DeviceInfo (index/name/cu/wg).
     {
@@ -948,7 +741,7 @@ int run_common(std::vector<DeviceCtx>& devices, SharedState& st, bool interactiv
         for (std::size_t i = 0; i < initialized.size(); ++i) {
             if (i) os << ',';
             os << "{\"index\":"  << i
-               << ",\"name\":\"" << json_escape(initialized[i].name) << "\""
+               << ",\"name\":\"" << anvil256::json_escape(initialized[i].name) << "\""
                << ",\"cu\":"     << initialized[i].sm_count
                << ",\"wg\":"     << initialized[i].block_size
                << ",\"grid\":"   << initialized[i].grid_size
@@ -956,14 +749,14 @@ int run_common(std::vector<DeviceCtx>& devices, SharedState& st, bool interactiv
                << "}";
         }
         os << "]}";
-        emit(os.str());
+        anvil256::emit(os.str());
     }
 
     std::vector<std::thread> workers;
     for (auto& d : initialized) workers.emplace_back(device_worker, std::move(d), &st);
 
     if (interactive) {
-        stdin_reader(&st);
+        anvil256::stdin_reader(&st);
     } else {
         while (!st.exit_requested.load() && !st.found_in_job.load())
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -981,7 +774,7 @@ int run_once(const std::string& inner_hex,
 {
     std::vector<DeviceCtx> devices;
     std::string err;
-    if (!enumerate_devices(devices, err)) { emit_error(err); return 1; }
+    if (!enumerate_devices(devices, err)) { anvil256::emit_error(err); return 1; }
 
     auto wanted = env_csv_indices("MINER_DEVICES");
     if (!wanted.empty()) {
@@ -990,11 +783,11 @@ int run_once(const std::string& inner_hex,
             if (i < devices.size()) filtered.push_back(std::move(devices[i]));
         devices = std::move(filtered);
     }
-    if (devices.empty()) { emit_error("no devices selected"); return 1; }
+    if (devices.empty()) { anvil256::emit_error("no devices selected"); return 1; }
 
     std::uint8_t ib[32], eb[32], db[32];
-    if (!parse_hex32(inner_hex, ib) || !parse_hex32(eps_hex, eb) || !parse_hex32(diff_hex, db)) {
-        emit_error("inner/entropy/difficulty must be 32-byte hex"); return 1;
+    if (!anvil256::parse_hex32(inner_hex, ib) || !anvil256::parse_hex32(eps_hex, eb) || !anvil256::parse_hex32(diff_hex, db)) {
+        anvil256::emit_error("inner/entropy/difficulty must be 32-byte hex"); return 1;
     }
 
     SharedState st;
@@ -1003,11 +796,10 @@ int run_once(const std::string& inner_hex,
     std::signal(SIGTERM, handle_signal);
 
     Job j;
-    for (int i = 0; i < 4; ++i) j.inner[i]      = load_le64(ib + i * 8);
-    for (int i = 0; i < 4; ++i) j.entropy[i]    = load_le64(eb + i * 8);
-    for (int i = 0; i < 4; ++i) j.difficulty[i] = load_be64(db + i * 8);
-    std::random_device rd;
-    j.base_nonce = ((std::uint64_t)rd() << 32) ^ (std::uint64_t)rd();
+    for (int i = 0; i < 4; ++i) j.inner[i]      = anvil256::load_le64(ib + i * 8);
+    for (int i = 0; i < 4; ++i) j.entropy[i]    = anvil256::load_le64(eb + i * 8);
+    for (int i = 0; i < 4; ++i) j.difficulty[i] = anvil256::load_be64(db + i * 8);
+    anvil256::fill_random_base_nonce(j);
     j.active = true;
     j.id = 1;
     st.next_job_id = 2;
@@ -1019,7 +811,7 @@ int run_once(const std::string& inner_hex,
 int run_interactive() {
     std::vector<DeviceCtx> devices;
     std::string err;
-    if (!enumerate_devices(devices, err)) { emit_error(err); return 1; }
+    if (!enumerate_devices(devices, err)) { anvil256::emit_error(err); return 1; }
 
     auto wanted = env_csv_indices("MINER_DEVICES");
     if (!wanted.empty()) {
@@ -1028,7 +820,7 @@ int run_interactive() {
             if (i < devices.size()) filtered.push_back(std::move(devices[i]));
         devices = std::move(filtered);
     }
-    if (devices.empty()) { emit_error("no devices selected"); return 1; }
+    if (devices.empty()) { anvil256::emit_error("no devices selected"); return 1; }
 
     SharedState st;
     g_state_ptr = &st;
